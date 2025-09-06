@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TruthLens | Verificador Inteligente de Noticias</title>
+    <link rel="icon" href="img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Navigation -->
+    <nav class="glass-dark fixed w-full top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl hero-gradient flex items-center justify-center pulse">
+                    <i class="fas fa-shield-alt text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">TruthLens</h1>
+                    <p class="text-xs text-gray-400">AI-Powered Verification</p>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 relative z-10">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="floating">
+                <h1 class="hero-title text-5xl md:text-6xl font-bold mb-6 neon-text">
+                    Detecta la Verdad
+                </h1>
+                <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+                    Análisis instantáneo de noticias con inteligencia artificial avanzada.
+                    <span class="text-purple-400">92% de precisión</span> en detección de contenido falso.
+                </p>
+            </div>
+            
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-6 max-w-2xl mx-auto mb-12">
+                <div class="glass rounded-2xl p-4">
+                    <div class="text-3xl font-bold text-purple-400">1M+</div>
+                    <div class="text-xs text-gray-400">Análisis realizados</div>
+                </div>
+                <div class="glass rounded-2xl p-4">
+                    <div class="text-3xl font-bold text-blue-400">92%</div>
+                    <div class="text-xs text-gray-400">Precisión</div>
+                </div>
+                <div class="glass rounded-2xl p-4">
+                    <div class="text-3xl font-bold text-pink-400">24/7</div>
+                    <div class="text-xs text-gray-400">Disponible</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Analysis Section -->
+    <section class="px-6 pb-20 relative z-10">
+        <div class="max-w-6xl mx-auto">
+            <div class="glass rounded-3xl p-8 md:p-12 neon-glow">
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Input Area -->
+                    <div class="md:col-span-2">
+                        <label class="block text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-file-alt mr-3 text-purple-400"></i>
+                            Texto a Analizar
+                        </label>
+                        
+                        <div class="relative">
+                            <textarea
+                                id="news-text"
+                                class="w-full h-64 p-6 bg-black bg-opacity-50 border border-gray-700 rounded-2xl text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none transition-all resize-none"
+                                placeholder="Pega aquí la noticia que deseas verificar..."
+                            ></textarea>
+                            <div class="absolute bottom-4 right-4 text-gray-500 text-sm">
+                                <span id="char-count">0</span> / 5000 caracteres
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap gap-4 mt-6">
+                            <button id="analyze-btn" class="btn-primary px-8 py-4 rounded-xl text-white font-semibold flex items-center space-x-3">
+                                <i class="fas fa-search"></i>
+                                <span>Analizar Ahora</span>
+                            </button>
+                            
+                            <button id="sample-btn" class="px-8 py-4 glass rounded-xl text-white font-semibold hover:bg-white hover:bg-opacity-10 transition-all flex items-center space-x-3">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>Cargar Ejemplo</span>
+                            </button>
+                            
+                            <button id="clear-btn" class="px-8 py-4 glass rounded-xl text-gray-400 hover:text-white hover:bg-white hover:bg-opacity-10 transition-all flex items-center space-x-3">
+                                <i class="fas fa-eraser"></i>
+                                <span>Limpiar</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Loading State -->
+                        <div id="loading" class="hidden mt-8 text-center">
+                            <div class="loader mx-auto mb-4"></div>
+                            <p class="text-gray-400">Analizando contenido...</p>
+                        </div>
+                        
+                        <!-- Result Card -->
+                        <div id="result-card" class="hidden mt-8 glass-dark rounded-2xl p-6 slide-in-up">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 id="result-title" class="text-2xl font-bold"></h3>
+                                <span id="confidence-badge" class="px-4 py-2 rounded-full text-sm font-semibold"></span>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-gray-400">Nivel de Confianza</span>
+                                    <span id="result-prob" class="font-semibold"></span>
+                                </div>
+                                <div class="confidence-meter">
+                                    <div id="confidence-fill" class="confidence-fill"></div>
+                                </div>
+                            </div>
+                            
+                            <p id="result-description" class="text-gray-300"></p>
+                            
+                            <div class="grid grid-cols-3 gap-4 mt-6">
+                                <div class="text-center">
+                                    <i class="fas fa-brain text-2xl text-purple-400 mb-2"></i>
+                                    <div class="text-xs text-gray-400">ML Score</div>
+                                    <div id="ml-score" class="font-semibold">-</div>
+                                </div>
+                                <div class="text-center">
+                                    <i class="fas fa-language text-2xl text-blue-400 mb-2"></i>
+                                    <div class="text-xs text-gray-400">Sentiment</div>
+                                    <div id="sentiment" class="font-semibold">-</div>
+                                </div>
+                                <div class="text-center">
+                                    <i class="fas fa-exclamation-triangle text-2xl text-yellow-400 mb-2"></i>
+                                    <div class="text-xs text-gray-400">Risk Level</div>
+                                    <div id="risk-level" class="font-semibold">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sidebar -->
+                    <div>
+                        <!-- Quick Tips -->
+                        <div class="glass rounded-2xl p-6 mb-6">
+                            <h3 class="font-semibold mb-4 flex items-center">
+                                <i class="fas fa-shield-check mr-3 text-green-400"></i>
+                                Señales de Alerta
+                            </h3>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <i class="fas fa-check-circle text-green-400 mt-1 mr-3"></i>
+                                    <span class="text-sm text-gray-300">Títulos sensacionalistas o clickbait</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check-circle text-green-400 mt-1 mr-3"></i>
+                                    <span class="text-sm text-gray-300">Fuentes no verificables o anónimas</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check-circle text-green-400 mt-1 mr-3"></i>
+                                    <span class="text-sm text-gray-300">Lenguaje emocional excesivo</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check-circle text-green-400 mt-1 mr-3"></i>
+                                    <span class="text-sm text-gray-300">Fechas inconsistentes o ausentes</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Recent History -->
+                        <div class="glass rounded-2xl p-6">
+                            <h3 class="font-semibold mb-4 flex items-center">
+                                <i class="fas fa-history mr-3 text-blue-400"></i>
+                                Historial Reciente
+                            </h3>
+                            <div id="history" class="space-y-3 max-h-64 overflow-y-auto">
+                                <p id="empty-history" class="text-center text-gray-500 py-8">
+                                    No hay análisis recientes
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="px-6 pb-20 relative z-10">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Tecnología de Vanguardia</h2>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass rounded-2xl p-8 card-3d hover:neon-glow transition-all">
+                    <div class="w-16 h-16 rounded-2xl hero-gradient flex items-center justify-center mb-6">
+                        <i class="fas fa-robot text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Machine Learning</h3>
+                    <p class="text-gray-400">Algoritmos entrenados con millones de artículos verificados para máxima precisión.</p>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 card-3d hover:neon-glow transition-all">
+                    <div class="w-16 h-16 rounded-2xl hero-gradient flex items-center justify-center mb-6">
+                        <i class="fas fa-lock text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">100% Privado</h3>
+                    <p class="text-gray-400">Tu información nunca se almacena. Análisis seguro y anónimo en tiempo real.</p>
+                </div>
+                
+                <div class="glass rounded-2xl p-8 card-3d hover:neon-glow transition-all">
+                    <div class="w-16 h-16 rounded-2xl hero-gradient flex items-center justify-center mb-6">
+                        <i class="fas fa-bolt text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Resultados Instantáneos</h3>
+                    <p class="text-gray-400">Obtén análisis detallados en menos de 3 segundos con métricas precisas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="glass-dark px-6 py-12 text-center relative z-10">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center justify-center space-x-6 mb-6">
+                <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fab fa-twitter text-xl"></i>
+                </a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fab fa-github text-xl"></i>
+                </a>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fab fa-linkedin text-xl"></i>
+                </a>
+            </div>
+            <p class="text-gray-400 mb-2">
+                Hecho con <i class="fas fa-heart text-red-500"></i> para combatir la desinformación
+            </p>
+            <p class="text-xs text-gray-500">
+                © 2025 TruthLens. Todos los derechos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <script src="static/main.js"></script>
+
+  </body>
+</html>
