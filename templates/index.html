@@ -193,7 +193,7 @@
                         Acciones Rápidas
                     </h3>
                     <div class="flex gap-3">
-                        <button class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
+                        <button id="quick-url-btn" class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
                             <i class="fas fa-newspaper text-blue-400"></i>
                             <span>Verificar URL</span>
                         </button>
@@ -227,7 +227,7 @@
                                 <button id="file-mode-btn" class="btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl text-sm transition-all duration-300">
                                     <i class="fas fa-upload mr-2"></i>Subir Archivo
                                 </button>
-                                <button class="btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl text-sm transition-all duration-300">
+                                <button id="url-mode-btn" class="btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-xl text-sm transition-all duration-300">
                                     <i class="fas fa-link mr-2"></i>URL
                                 </button>
                             </div>
@@ -273,6 +273,31 @@ Ejemplo: 'Científicos descubren cura milagrosa que elimina el cáncer en 24 hor
                                     <p class="text-sm">Haz clic aquí para seleccionar una imagen (PNG, JPG, JPEG)</p>
                                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Tamaño máximo recomendado: 5 MB</p>
                                     <div id="image-info" class="hidden mt-3 text-xs text-gray-600 dark:text-gray-300"></div>
+                                </div>
+                            </div>
+
+                            <!-- Contenedor Modo URL -->
+                            <div id="url-mode" class="hidden">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="news-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            URL del artículo de noticia
+                                        </label>
+                                        <input
+                                            type="url"
+                                            id="news-url"
+                                            class="w-full p-4 bg-gray-50 dark:bg-black dark:bg-opacity-30 border border-gray-300 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:outline-none input-glow transition-all"
+                                            placeholder="https://ejemplo.com/noticia..."
+                                        />
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Se extraerá automáticamente el título, contenido y descripción del artículo
+                                    </div>
+                                    <div id="url-preview" class="hidden mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                                        <h4 class="font-semibold text-sm mb-2">Vista previa del contenido extraído:</h4>
+                                        <div id="url-preview-content" class="text-xs text-gray-600 dark:text-gray-400"></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -360,11 +385,11 @@ Ejemplo: 'Científicos descubren cura milagrosa que elimina el cáncer en 24 hor
                                 </div>
                                 
                                 <div class="flex justify-center space-x-4 mt-8">
-                                    <button class="btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300">
+                                    <button id="download-btn" class="btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300">
                                         <i class="fas fa-download"></i>
                                         <span>Descargar Reporte</span>
                                     </button>
-                                    <button class="btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300">
+                                    <button id="share-btn" class="btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300">
                                         <i class="fas fa-share-alt"></i>
                                         <span>Compartir</span>
                                     </button>
