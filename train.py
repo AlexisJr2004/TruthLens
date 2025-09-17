@@ -1,9 +1,11 @@
 # train.py (versión adaptada a Excel)
+# train.py (versión adaptada a Excel)
 import os
 import re
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 from sklearn.metrics import classification_report
 import joblib
 
@@ -11,8 +13,11 @@ os.makedirs("models", exist_ok=True)
 
 def clean_text(text):
     """Limpieza básica: quitar URLs, caracteres no alfabéticos (mantener tildes y ñ)."""
+    """Limpieza básica: quitar URLs, caracteres no alfabéticos (mantener tildes y ñ)."""
     if pd.isna(text):
         return ""
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]", " ", text)
     text = re.sub(r"http\S+", "", text)
     text = re.sub(r"[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]", " ", text)
     return text.lower()
@@ -52,6 +57,15 @@ def main():
     model = RandomForestClassifier(
         n_estimators=200, max_depth=None, random_state=42, n_jobs=-1
     )
+    X_dev_tfidf   = vectorizer.transform(X_dev)
+
+    # =========================
+    # 4. Entrenamiento modelo
+    # =========================
+    print("🌲 Entrenando modelo RandomForest...")
+    model = RandomForestClassifier(
+        n_estimators=200, max_depth=None, random_state=42, n_jobs=-1
+    )
     model.fit(X_train_tfidf, y_train)
 
     # =========================
@@ -61,6 +75,11 @@ def main():
     y_pred = model.predict(X_dev_tfidf)
     print(classification_report(y_dev, y_pred, target_names=["True", "Fake"]))
 
+    # =========================
+    # 6. Guardado de modelo
+    # =========================
+    print("\n💾 Guardando modelo...")
+    joblib.dump(model, "models/fake_news_model.pkl")
     # =========================
     # 6. Guardado de modelo
     # =========================
@@ -87,3 +106,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

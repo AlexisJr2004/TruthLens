@@ -23,6 +23,60 @@ if (savedTheme === 'dark') {
     html.classList.remove('dark');
     darkModeToggle.checked = false;
 }
+// =====================================================================
+// COMPARTIR Y DESCARGAR REPORTE
+// =====================================================================
+function setupShareAndDownload() {
+    const shareBtn = document.getElementById('share-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const title = document.getElementById('result-title')?.textContent || '';
+    const badge = document.getElementById('confidence-badge')?.textContent || '';
+    const prob = document.getElementById('result-prob')?.textContent || '';
+    const description = document.getElementById('result-description')?.textContent || '';
+    const preview = document.getElementById('url-preview-content')?.textContent || document.getElementById('news-text')?.value || '';
+
+    // --- Compartir ---
+    if (shareBtn) {
+        shareBtn.onclick = function () {
+            const shareText = `📰 TruthLens\n\nResultado: ${title} (${badge})\nConfianza: ${prob}\n\n${description}\n\nExtracto:\n${preview}`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Reporte TruthLens',
+                    text: shareText
+                }).catch(() => {});
+            } else {
+                // Fallback: copiar al portapapeles
+                navigator.clipboard.writeText(shareText).then(() => {
+                    Swal.fire({
+                        title: 'Copiado',
+                        text: 'Reporte copiado al portapapeles.',
+                        icon: 'success',
+                        background: 'rgba(0,0,0,0.8)',
+                        color: 'white'
+                    });
+                });
+            }
+        };
+    }
+
+    // --- Descargar ---
+    if (downloadBtn) {
+        downloadBtn.onclick = function () {
+            const report = `Reporte TruthLens\n====================\n\nResultado: ${title} (${badge})\nConfianza: ${prob}\n\n${description}\n\nExtracto:\n${preview}\n\nFecha: ${new Date().toLocaleString()}`;
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'reporte_truthlens.txt';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        };
+    }
+}
 
 darkModeToggle.addEventListener('change', function () {
     if (this.checked) {
@@ -521,6 +575,9 @@ function displayResults(results) {
     mlScore.textContent = results.mlScore;
     sentiment.textContent = results.sentiment;
     riskLevel.textContent = results.riskLevel;
+
+    // Llamar a la función de compartir/descargar solo cuando hay resultado
+    setupShareAndDownload();
 }
 
 // =====================================================================
