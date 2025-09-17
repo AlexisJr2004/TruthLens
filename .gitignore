@@ -1,0 +1,5 @@
+.venv/
+temp/
+__pycache__/
+copia_seguridad.html
+models/

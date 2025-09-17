@@ -54,7 +54,7 @@ const CONFIG = {
 // =====================================================================
 // VARIABLES GLOBALES
 // =====================================================================
-let INPUT_MODE = 'text'; // 'text' | 'file' | 'image'
+let INPUT_MODE = 'text'; // 'text' | 'file' | 'image' | 'url'
 
 // =====================================================================
 // INICIALIZACIÓN DE LA APLICACIÓN
@@ -70,6 +70,7 @@ function initializeApplication() {
     initializeVoiceInput();
     initializeQuickActions();
     initializeFileMode();
+    initializeUrlMode();
     hydrateHistoryUI();
 }
 // Preloader (1s y fade-out)
@@ -186,10 +187,11 @@ async function analyzeText() {
     const textarea = document.getElementById('news-text');
     const newsFile = document.getElementById('news-file');
     const imageFile = document.getElementById('image-file');
+    const urlInput = document.getElementById('news-url');
 
     let response, payload;
     // Datos de contexto para decidir qué guardar en historial
-    let ctx = { typedText: '', file: null, img: null };
+    let ctx = { typedText: '', file: null, img: null, url: '' };
 
     loading.classList.remove('hidden');
     resultCard.classList.add('hidden');
@@ -209,6 +211,15 @@ async function analyzeText() {
             const form = new FormData();
             form.append('image', img);
             response = await fetch('/ocr_predict', { method: 'POST', body: form });
+        } else if (INPUT_MODE === 'url') {
+            const url = (urlInput.value || '').trim();
+            if (!url) throw new Error('Ingresa una URL válida.');
+            ctx.url = url;
+            response = await fetch('/analyze_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
         } else {
             const text = (textarea.value || '').trim();
             if (!text) throw new Error('Ingresa texto para analizar.');
@@ -241,6 +252,16 @@ async function analyzeText() {
             textarea.dispatchEvent(new Event('input'));
         }
 
+        // Si es URL, mostrar preview del contenido extraído
+        if (INPUT_MODE === 'url' && payload.extracted_preview) {
+            const preview = document.getElementById('url-preview');
+            const previewContent = document.getElementById('url-preview-content');
+            if (preview && previewContent) {
+                previewContent.textContent = payload.extracted_preview;
+                preview.classList.remove('hidden');
+            }
+        }
+
         // Decidir el texto que se guarda en el historial
         let historyText = '';
         if (INPUT_MODE === 'text') {
@@ -249,6 +270,8 @@ async function analyzeText() {
             historyText = payload.extracted_preview || (ctx.file?.name || 'Archivo analizado');
         } else if (INPUT_MODE === 'image') {
             historyText = payload.extracted_preview || payload.text || (ctx.img?.name || 'Imagen analizada');
+        } else if (INPUT_MODE === 'url') {
+            historyText = payload.article_data?.title || ctx.url || 'URL analizada';
         }
         addToHistory(historyText, { probability: percent });
     } catch (e) {
@@ -280,6 +303,7 @@ function initializeFileMode() {
     const textMode = document.getElementById('text-mode');
     const fileMode = document.getElementById('file-mode');
     const imageMode = document.getElementById('image-mode');
+    const urlMode = document.getElementById('url-mode');
     const newsFile = document.getElementById('news-file');
     const imageFile = document.getElementById('image-file');
     const fileDrop = document.getElementById('file-dropzone');
@@ -301,6 +325,7 @@ function initializeFileMode() {
         textMode.classList.toggle('block', mode === 'text');
         fileMode.classList.toggle('hidden', mode !== 'file');
         imageMode.classList.toggle('hidden', mode !== 'image');
+        if (urlMode) urlMode.classList.toggle('hidden', mode !== 'url');
         updateButton();
     }
     
@@ -317,7 +342,7 @@ function initializeFileMode() {
             // Abrir selector al entrar a modo archivo
             setTimeout(() => newsFile.click(), 0);
         } else {
-            // Volver a texto desde archivo o imagen
+            // Volver a texto desde archivo, imagen o URL
             setMode('text');
         }
     });
@@ -378,6 +403,43 @@ function initializeFileMode() {
 }
 
 // =====================================================================
+// MODO URL
+// =====================================================================
+function initializeUrlMode() {
+    const urlBtn = document.getElementById('url-mode-btn');
+    const urlInput = document.getElementById('news-url');
+    const urlPreview = document.getElementById('url-preview');
+
+    if (!urlBtn) return;
+
+    // Toggle al modo URL
+    urlBtn.addEventListener('click', () => {
+        if (window.__setInputMode) {
+            window.__setInputMode('url');
+        }
+        if (urlInput) {
+            urlInput.focus();
+        }
+        // Limpiar preview previo
+        if (urlPreview) {
+            urlPreview.classList.add('hidden');
+        }
+    });
+
+    // Validación básica de URL en tiempo real
+    if (urlInput) {
+        urlInput.addEventListener('input', () => {
+            const url = urlInput.value.trim();
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                urlInput.style.borderColor = '#f59e0b'; // amarillo de advertencia
+            } else {
+                urlInput.style.borderColor = ''; // resetear
+            }
+        });
+    }
+}
+
+// =====================================================================
 // FUNCIONALIDAD DE TEXTO DE EJEMPLO
 // =====================================================================
 function initializeSampleText() {
@@ -396,10 +458,24 @@ function initializeSampleText() {
 function initializeClearButton() {
     document.getElementById('clear-btn').addEventListener('click', () => {
         const textarea = document.getElementById('news-text');
+        const urlInput = document.getElementById('news-url');
+        const urlPreview = document.getElementById('url-preview');
         const resultCard = document.getElementById('result-card');
         
+        // Limpiar textarea
         textarea.value = '';
         textarea.dispatchEvent(new Event('input'));
+        
+        // Limpiar URL input y preview
+        if (urlInput) {
+            urlInput.value = '';
+            urlInput.style.borderColor = '';
+        }
+        if (urlPreview) {
+            urlPreview.classList.add('hidden');
+        }
+        
+        // Ocultar resultados
         resultCard.classList.add('hidden');
     });
 }
@@ -517,6 +593,22 @@ function initializeVoiceInput() {
 // =====================================================================
 function initializeQuickActions() {
     const imageInput = document.getElementById('image-file');
+    const quickUrlBtn = document.getElementById('quick-url-btn');
+    
+    // Botón específico para Verificar URL
+    if (quickUrlBtn) {
+        quickUrlBtn.addEventListener('click', () => {
+            if (window.__setInputMode) {
+                window.__setInputMode('url');
+            }
+            const urlInput = document.getElementById('news-url');
+            if (urlInput) {
+                urlInput.focus();
+            }
+        });
+    }
+    
+    // Otros botones de acción rápida
     document.querySelectorAll('.btn-secondary').forEach(button => {
         button.addEventListener('click', () => {
             const action = button.querySelector('span')?.textContent?.trim();
@@ -597,6 +689,3 @@ function addToHistory(text, result) {
         container.removeChild(container.lastElementChild);
     }
 }
-
-
-

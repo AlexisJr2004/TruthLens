@@ -33,7 +33,12 @@ Aplicación web con Flask + Frontend moderno para analizar noticias y detectar p
 .
 ├── app.py                # API Flask para predicciones y OCR
 ├── train.py              # Entrenamiento del modelo (TF-IDF + RandomForest + GridSearchCV)
-├── train.csv             # Conjunto de datos de entrenamiento (ver formato abajo)
+├── data/                 # Conjunto de datos
+│   ├── train.csv
+│   ├── train.xlsx
+│   ├── development.xlsx
+│   ├── test.xlsx
+│   └── submission.xlsx
 ├── models/               # Artefactos del modelo
 │   ├── fake_news_model.pkl
 │   └── vectorizer.pkl
@@ -89,7 +94,7 @@ Si no estableces la variable, se usará el valor por defecto definido en [app.py
 
 ## Conjunto de Datos
 
-Archivo: [train.csv](train.csv) con columnas:
+Archivo: [data/train.csv](data/train.csv) con columnas:
 
 ```
 title,text,label
