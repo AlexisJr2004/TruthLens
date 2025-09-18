@@ -264,6 +264,10 @@ def analyze_url():
         if content: preview_parts.append(f"Contenido: {content[:200]}...")
         
         extracted_preview = " | ".join(preview_parts)
+
+        # Guardar el artículo completo en un archivo para referencia futura
+        news_extractor.save_to_file(article_data)
+        
         
         return jsonify({
             "prediction": "Fake" if pred == 1 else "Real",
