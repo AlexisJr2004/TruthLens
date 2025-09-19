@@ -3,6 +3,7 @@ temp/
 __pycache__/
 copia_seguridad.html
 models/
+!utils/models/
 ~$*.xlsx
 eda_outputs/
 test_*.py

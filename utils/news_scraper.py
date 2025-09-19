@@ -231,7 +231,6 @@ class NewsExtractor:
         
         print(f"Datos guardados en: {filename}")
 
-
 def main():
     parser = argparse.ArgumentParser(description='Extractor de contenido de noticias')
     parser.add_argument('url', nargs='?', help='URL del artículo de noticias')
@@ -274,7 +273,6 @@ def main():
         print(f"\n✅ Extracción completada exitosamente")
     else:
         print("❌ Error: No se pudo extraer el contenido")
-
 
 if __name__ == "__main__":
     main()
