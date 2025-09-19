@@ -1,16 +1,14 @@
-# =====================================================================
-# NEWS ANALYZER - APLICACIÓN FLASK PRINCIPAL
-# =====================================================================
-
-# =====================================================================
 # IMPORTACIONES Y CONFIGURACIÓN INICIAL
-# =====================================================================
 from flask import Flask, render_template, request, jsonify
 import torch
 import re
 import os
 from io import BytesIO
 import requests
+
+# Cargar variables de entorno desde .env
+from dotenv import load_dotenv
+load_dotenv()  # Carga las variables del archivo .env
 
 # Importaciones para BERT
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -29,23 +27,21 @@ try:
 except Exception:
     Document = None
 
-
-# =====================================================================
 # CONFIGURACIÓN DE LA APLICACIÓN FLASK
-# =====================================================================
 app = Flask(__name__, template_folder="src/templates", static_folder="src/static")
 
-# =====================================================================
 # CONSTANTES Y CONFIGURACIÓN
-# =====================================================================
-# Cambiar a modelo BERT
-BERT_MODEL_PATH = os.path.join("models", "truthlens_bert_model")
-OCR_API_KEY = os.getenv("OCR_SPACE_API_KEY", "K87492476688957")
-OCR_API_URL = "https://api.ocr.space/parse/image"
+BERT_MODEL_PATH = os.getenv("BERT_MODEL_PATH", os.path.join("models", "truthlens_bert_model")) # Configuración del modelo BERT
 
-# =====================================================================
+# Configuración OCR.Space API
+OCR_API_KEY = os.getenv("OCR_SPACE_API_KEY")
+OCR_API_URL = os.getenv("OCR_API_URL")
+
+# Configuración Flask
+FLASK_ENV = os.getenv("FLASK_ENV", "development")
+FLASK_DEBUG = os.getenv("FLASK_DEBUG", "True").lower() == "true"
+
 # CLASE TRUTHLENS BERT
-# =====================================================================
 class TruthLensBERT:
     def __init__(self, model_path=BERT_MODEL_PATH):
         """Inicializa el modelo BERT entrenado"""
@@ -721,8 +717,12 @@ def ocr_predict():
     except Exception as e:
         return jsonify({"error": f"Error en predicción BERT: {str(e)}"}), 500
 
-# =====================================================================
 # EJECUCIÓN PRINCIPAL
-# =====================================================================
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("🚀 Iniciando TruthLens Flask App...")
+    print(f"🔧 Entorno: {FLASK_ENV}")
+    print(f"🐛 Debug: {FLASK_DEBUG}")
+    print(f"🤖 Modelo BERT: {BERT_MODEL_PATH}")
+    print(f"🔍 OCR API: {'Configurado' if OCR_API_KEY else 'No configurado'}")
+    
+    app.run(debug=FLASK_DEBUG)

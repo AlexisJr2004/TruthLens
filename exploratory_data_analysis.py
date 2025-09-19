@@ -1,6 +1,4 @@
 """
-ANÁLISIS EXPLORATORIO DE DATOS - DETECCIÓN DE NOTICIAS FALSAS
-==============================================================
 Script completo para analizar datasets antes del entrenamiento del modelo.
 Adaptado para entorno local con guardado automático de reportes y gráficos.
 """
@@ -25,7 +23,7 @@ plt.rcParams['savefig.dpi'] = 300
 plt.rcParams['savefig.bbox'] = 'tight'
 
 # Crear directorio de salida
-OUTPUT_DIR = "data/EDA"
+OUTPUT_DIR = "data/eda_outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Archivo de reporte
