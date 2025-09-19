@@ -236,20 +236,47 @@
                         <div class="relative mb-6">
                             <!-- Modo TEXTO (por defecto) -->
                             <div id="text-mode" class="block">
-                                <textarea
-                                    id="news-text"
-                                    class="w-full h-64 p-6 bg-gray-50 dark:bg-black dark:bg-opacity-30 border border-gray-300 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:outline-none input-glow transition-all resize-none"
-                                    placeholder="Pega aquí la noticia, artículo o texto que deseas verificar... 
+                                <div class="space-y-4">
+                                    <!-- Campo para el título -->
+                                    <div>
+                                        <label for="news-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <i class="fas fa-heading mr-1"></i>Título de la noticia (opcional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="news-title"
+                                            class="w-full p-4 bg-gray-50 dark:bg-black dark:bg-opacity-30 border border-gray-300 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:outline-none input-glow transition-all"
+                                            placeholder="Ejemplo: ¡INCREÍBLE! Médicos ocultan cura milagrosa del cáncer..."
+                                        />
+                                    </div>
+                                    
+                                    <!-- Campo para el contenido -->
+                                    <div>
+                                        <label for="news-text" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <i class="fas fa-align-left mr-1"></i>Contenido de la noticia
+                                        </label>
+                                        <textarea
+                                            id="news-text"
+                                            class="w-full h-48 p-6 bg-gray-50 dark:bg-black dark:bg-opacity-30 border border-gray-300 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:outline-none input-glow transition-all resize-none"
+                                            placeholder="Pega aquí el contenido de la noticia, artículo o texto que deseas verificar... 
 
-Ejemplo: 'Científicos descubren cura milagrosa que elimina el cáncer en 24 horas con este simple truco que las farmacéuticas no quieren que sepas...'"
-                                ></textarea>
-                                <div class="absolute bottom-4 right-4 flex items-center space-x-4">
-                                    <span class="text-xs text-gray-500 dark:text-gray-500">
-                                        <span id="char-count">0</span> / 10,000 caracteres
-                                    </span>
-                                    <button id="voice-input" class="text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-white transition-colors">
-                                        <i class="fas fa-microphone"></i>
-                                    </button>
+Ejemplo: 'Los médicos no quieren que sepas este truco secreto que cura el cáncer en 3 días. El gobierno oculta esta información porque las farmacéuticas perderían millones...'"
+                                        ></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mt-3">
+                                    <div class="flex items-center space-x-4">
+                                        <span class="text-xs text-gray-500 dark:text-gray-500">
+                                            <span id="char-count">0</span> / 10,000 caracteres
+                                        </span>
+                                        <button id="voice-input" class="text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-white transition-colors" title="Dictado por voz">
+                                            <i class="fas fa-microphone"></i>
+                                        </button>
+                                    </div>
+                                    <div class="text-xs text-gray-400 dark:text-gray-500">
+                                        <i class="fas fa-lightbulb mr-1"></i>Tip: Separar título y contenido mejora la precisión
+                                    </div>
                                 </div>
                             </div>
 
@@ -393,6 +420,21 @@ Ejemplo: 'Científicos descubren cura milagrosa que elimina el cáncer en 24 hor
                                         <i class="fas fa-share-alt"></i>
                                         <span>Compartir</span>
                                     </button>
+                                    <button id="debug-btn" class="btn-secondary bg-purple-100 dark:bg-purple-900 hover:bg-purple-200 dark:hover:bg-purple-800 px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300">
+                                        <i class="fas fa-code"></i>
+                                        <span>Ver Debug</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Panel de Debug (oculto por defecto) -->
+                                <div id="debug-panel" class="hidden mt-6 p-6 bg-gray-900 dark:bg-black rounded-xl border border-gray-700">
+                                    <h4 class="text-lg font-bold text-green-400 mb-4 flex items-center">
+                                        <i class="fas fa-terminal mr-2"></i>
+                                        Información de Debug
+                                    </h4>
+                                    <div id="debug-content" class="text-sm text-gray-300 font-mono space-y-2">
+                                        <!-- El contenido se llenará via JavaScript -->
+                                    </div>
                                 </div>
                             </div>
                         </div>

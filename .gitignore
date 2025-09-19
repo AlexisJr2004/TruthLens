@@ -4,3 +4,7 @@ __pycache__/
 copia_seguridad.html
 models/
 ~$*.xlsx
+EDA/
+test_*.py
+MIGRATION_BERT.md
+.env
