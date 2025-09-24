@@ -1,4 +1,28 @@
 // =====================================================================
+// NEWS ANALYZER - SCRIPT PRINCIPAL DE LA APLICACIÓN
+// =====================================================================
+
+// =====================================================================
+// BOTÓN DE IR ARRIBA
+// =====================================================================
+document.addEventListener('DOMContentLoaded', function () {
+    const scrollBtn = document.getElementById('scroll-top-btn');
+    if (!scrollBtn) return;
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollBtn.classList.add('visible');
+        } else {
+            scrollBtn.classList.remove('visible');
+        }
+    });
+
+    scrollBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});
+
+// =====================================================================
 // CONFIGURACIÓN DEL DARK MODE
 // =====================================================================
 // Dark mode toggle functionality
@@ -1117,6 +1141,8 @@ function initializeVoiceInput() {
 function initializeQuickActions() {
     const imageInput = document.getElementById('image-file');
     const quickUrlBtn = document.getElementById('quick-url-btn');
+    const quickFileBtn = document.getElementById('quick-file-btn');
+    const quickTextBtn = document.getElementById('quick-text-btn');
     
     // Botón específico para Verificar URL
     if (quickUrlBtn) {
@@ -1128,6 +1154,40 @@ function initializeQuickActions() {
             if (urlInput) {
                 urlInput.focus();
             }
+        });
+    }
+    
+    // Botón para Subir Archivos
+    if (quickFileBtn) {
+        quickFileBtn.addEventListener('click', () => {
+            if (window.__setInputMode) {
+                window.__setInputMode('file');
+            }
+            if (window.__updateInputButton) {
+                window.__updateInputButton();
+            }
+            // Abrir gestor de archivos automáticamente
+            const newsFile = document.getElementById('news-file');
+            if (newsFile) {
+                newsFile.click();
+            }
+        });
+    }
+    
+    // Botón para Analizar Texto
+    if (quickTextBtn) {
+        quickTextBtn.addEventListener('click', () => {
+            if (window.__setInputMode) {
+                window.__setInputMode('text');
+            }
+            if (window.__updateInputButton) {
+                window.__updateInputButton();
+            }
+            // Enfocar el textarea después de cambiar al modo texto
+            setTimeout(() => {
+                const textarea = document.getElementById('news-text');
+                if (textarea) textarea.focus();
+            }, 100);
         });
     }
     
@@ -1221,7 +1281,8 @@ function addToHistory(text, result) {
     const entry = {
         text: text || '',
         probability: Number(result.probability) || 0,
-        time: new Date().toLocaleTimeString()
+        time: new Date().toLocaleTimeString(),
+        prediction: result.prediction || 'Unknown',
     };
 
     // Ocultar placeholder si existe

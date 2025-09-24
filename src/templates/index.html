@@ -193,22 +193,22 @@
                         Acciones Rápidas
                     </h3>
                     <div class="flex gap-3">
-                        <button id="quick-url-btn" class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
-                            <i class="fas fa-newspaper text-blue-400"></i>
-                            <span>Verificar URL</span>
+                        <button id="quick-text-btn" class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
+                            <i class="fa-solid fa-file-alt text-purple-400"></i>
+                            <span>Analizar Texto</span>
+                        </button>
+                        <button id="quick-file-btn" class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
+                            <i class="fas fa-file-upload text-red-400"></i>
+                            <span>Subir Archivo</span>
                         </button>
                         <button class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
                             <i class="fas fa-image text-green-400"></i>
                             <span>Analizar Imagen</span>
                         </button>
-                        <!-- <button class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
-                            <i class="fas fa-video text-red-400"></i>
-                            <span>Verificar Video</span>
+                        <button id="quick-url-btn" class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
+                            <i class="fas fa-newspaper text-blue-400"></i>
+                            <span>Verificar URL</span>
                         </button>
-                        <button class="flex-1 btn-secondary bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-300">
-                            <i class="fas fa-users text-purple-400"></i>
-                            <span>Análisis Social</span>
-                        </button> -->
                     </div>
                 </div>
             </section>
@@ -539,7 +539,75 @@
         </main>
     </div>
 
+    <!-- Botón flotante para abrir el chatbot -->
+    <button id="chatbot-btn"
+        class="fixed bottom-28 right-8 z-50 bg-gradient-to-br from-purple-600 to-blue-500 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg neon-glow hover:scale-110 hover:shadow-2xl transition-all duration-300"
+        style="box-shadow: 0 0 30px rgba(139,92,246,0.4);"
+        aria-label="Abrir TruthLens Assistant">
+        <i class="fas fa-robot text-xl"></i>
+    </button>
+
+    <!-- Ventana del chatbot -->
+    <div id="chatbot-window"
+        class="fixed bottom-32 right-8 z-50 w-96 max-w-[90vw] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/30 transition-all duration-500 opacity-0 pointer-events-none transform scale-95"
+        style="box-shadow: 0 20px 40px rgba(139,92,246,0.25), 0 0 40px rgba(139,92,246,0.1);">
+        
+        <!-- Header compacto -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-t-2xl">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-md">
+                    <i class="fas fa-robot text-white text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white text-sm">TruthLens AI</h3>
+                    <p class="text-xs text-green-500 font-medium flex items-center">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+                        En línea
+                    </p>
+                </div>
+            </div>
+            <button id="close-chatbot" 
+                class="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300 hover:rotate-90 w-8 h-8 flex items-center justify-center rounded-full">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+        </div>
+
+        <!-- Área de mensajes más amplia -->
+        <div id="chatbot-messages" 
+        class="p-3 space-y-2 h-[28rem] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-gray-100 dark:scrollbar-thumb-purple-600 dark:scrollbar-track-gray-800">
+            <!-- Mensaje de bienvenida compacto -->
+            <div class="text-center py-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mx-auto mb-3 shadow-lg">
+                    <i class="fas fa-robot text-white text-lg"></i>
+                </div>
+                <h3 class="font-bold text-gray-900 dark:text-white text-sm mb-1">¡Hola! Soy TruthLens AI 🔍</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">Tu asistente para verificar contenido. ¿En qué puedo ayudarte?</p>
+            </div>
+        </div>
+
+        <!-- Input compacto -->
+        <form class="p-3 border-t border-gray-200/30 dark:border-gray-700/30 bg-gray-50/50 dark:bg-gray-800/50 rounded-b-2xl">
+            <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                <span class="flex items-center">
+                    <i class="fas fa-lock mr-1"></i>
+                    Seguro y privado
+                </span>
+                <span>v2.1.0</span>
+            </div>
+        </form>
+    </div>
+
+    <!-- Botón Ir Arriba Mejorado y Redondo -->
+    <button id="scroll-top-btn"
+        class="fixed bottom-8 right-8 z-50 bg-gradient-to-br from-purple-600 to-blue-500 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg neon-glow
+        hover:scale-110 hover:shadow-2xl transition-all duration-300 opacity-0 pointer-events-none"
+        style="box-shadow: 0 0 30px rgba(139,92,246,0.4);"
+    >
+        <i class="fas fa-arrow-up text-2xl"></i>
+    </button>
+
     <script src="static/main.js"></script>
+    <script src="static/chatbot.js"></script>
 
 </body>
 

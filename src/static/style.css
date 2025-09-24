@@ -449,3 +449,22 @@ input:checked + .toggle-slider:before {
 .dark .badge-warning {
   color: #fcd34d;
 }
+
+/* Animación para el botón Ir Arriba */
+#scroll-top-btn {
+  transition: opacity 0.4s cubic-bezier(.4,0,.2,1), transform 0.4s cubic-bezier(.4,0,.2,1);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(30px) scale(0.9);
+}
+
+#scroll-top-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+/* Neon Glow extra */
+#scroll-top-btn.neon-glow {
+  box-shadow: 0 0 30px 8px rgba(139, 92, 246, 0.4), 0 4px 15px rgba(59, 130, 246, 0.2);
+}
