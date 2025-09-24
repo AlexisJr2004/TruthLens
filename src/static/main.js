@@ -1,8 +1,4 @@
 // =====================================================================
-// NEWS ANALYZER - SCRIPT PRINCIPAL DE LA APLICACIÓN
-// =====================================================================
-
-// =====================================================================
 // CONFIGURACIÓN DEL DARK MODE
 // =====================================================================
 // Dark mode toggle functionality
@@ -131,7 +127,7 @@ function setupDebugButton() {
         
         if (isVisible) {
             debugPanel.classList.add('hidden');
-            debugBtn.innerHTML = '<i class="fas fa-code"></i><span>Ver Debug</span>';
+            debugBtn.innerHTML = '<i class="fas fa-code text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ver Debug</span>';
         } else {
             // Mostrar información de debug
             const debugInfo = window.currentDebugInfo || {};
@@ -142,67 +138,192 @@ function setupDebugButton() {
             const isUrl = analysisType === 'URL Scraping';
             const isOcr = analysisType === 'OCR';
             
-            let debugHtml = `
-                <div class="text-yellow-400 font-bold mb-2">📊 RESULTADOS DEL MODELO:</div>
-                <div>• Predicción: <span class="text-white">${predInfo.prediction || 'N/A'}</span></div>
-                <div>• Confianza: <span class="text-white">${(predInfo.confidence || 0)}%</span></div>
-                <div>• Probabilidad Fake: <span class="text-white">${(predInfo.fakePercent || 0)}%</span></div>
-                <div>• Label: <span class="text-white">${predInfo.label}</span></div>
-                
-                <div class="text-yellow-400 font-bold mt-4 mb-2">🔍 DEBUG INTERNO:</div>
-                <div>• BERT dice: <span class="text-white">${debugInfo.bert_says || 'N/A'}</span></div>
-                <div>• Decisión final: <span class="text-white">${debugInfo.final_decision || 'N/A'}</span></div>
-                <div>• Umbral usado: <span class="text-white">${debugInfo.threshold_used || 'N/A'}</span></div>
-                <div>• Confianza decisión: <span class="text-white">${debugInfo.decision_confidence || 'N/A'}</span></div>
-                <div>• Calibración aplicada: <span class="text-white">${debugInfo.calibration_applied || 'N/A'}</span></div>
-                
-                <div class="text-yellow-400 font-bold mt-4 mb-2">💡 RECOMENDACIÓN:</div>
-                <div class="text-white">${debugInfo.recommendation || 'N/A'}</div>
-                
-                <div class="text-yellow-400 font-bold mt-4 mb-2">📏 LONGITUDES:</div>
-                <div>• Título: <span class="text-white">${debugInfo.title_length || 0} chars</span></div>
-                <div>• Contenido: <span class="text-white">${debugInfo.text_length || 0} chars</span></div>
-                <div>• Total: <span class="text-white">${debugInfo.combined_length || 0} chars</span></div>
-            `;
-            
-            // Información específica según el tipo de análisis
-            if (isUrl) {
-                debugHtml += `
-                    <div class="text-yellow-400 font-bold mt-4 mb-2">🌐 ANÁLISIS POR URL:</div>
-                    <div>• Contenido original: <span class="text-white">${debugInfo.original_content_length || 0} chars</span></div>
-                    <div>• Contenido truncado: <span class="text-white">${debugInfo.truncated_content_length || 0} chars</span></div>
-                    <div>• Truncado aplicado: <span class="text-white">${debugInfo.truncation_applied ? 'SÍ' : 'NO'}</span></div>
-                    <div>• Optimización: <span class="text-white">${debugInfo.optimization_applied || 'N/A'}</span></div>
-                `;
-            } else if (isOcr) {
-                debugHtml += `
-                    <div class="text-yellow-400 font-bold mt-4 mb-2">📸 ANÁLISIS POR IMAGEN (OCR):</div>
-                    <div>• Método extracción: <span class="text-white">OCR.space API</span></div>
-                    <div>• Texto detectado: <span class="text-white">${debugInfo.text_length || 0} chars</span></div>
-                    <div>• Vista previa: <span class="text-white">${debugInfo.text_preview || 'N/A'}</span></div>
-                `;
-            } else if (analysisType === 'Archivo subido') {
-                debugHtml += `
-                    <div class="text-yellow-400 font-bold mt-4 mb-2">📄 ANÁLISIS POR ARCHIVO:</div>
-                    <div>• ${debugInfo.file_info ? `<span class="text-white">${debugInfo.file_info}</span>` : '<span class="text-white">Información no disponible</span>'}</div>
-                    <div>• Título extraído: <span class="text-white">${debugInfo.title_length || 0} chars</span></div>
-                    <div>• Contenido extraído: <span class="text-white">${debugInfo.text_length || 0} chars</span></div>
-                    <div>• Separación automática: <span class="text-white">Título + Contenido</span></div>
-                `;
-            } else {
-                debugHtml += `
-                    <div class="text-yellow-400 font-bold mt-4 mb-2">✍️ ANÁLISIS MANUAL:</div>
-                    <div>• Tipo entrada: <span class="text-white">Texto directo</span></div>
-                    <div>• Separación título/contenido: <span class="text-white">SÍ</span></div>
-                `;
-            }
+            let debugHtml = generateSimpleDebugContent(predInfo, debugInfo, analysisType, isUrl, isOcr);
             
             debugContent.innerHTML = debugHtml;
             
             debugPanel.classList.remove('hidden');
-            debugBtn.innerHTML = '<i class="fas fa-times"></i><span>Ocultar Debug</span>';
+            debugBtn.innerHTML = '<i class="fas fa-times text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ocultar Debug</span>';
         }
     };
+}
+
+function generateSimpleDebugContent(predInfo, debugInfo, analysisType, isUrl, isOcr) {
+    const confidence = predInfo.confidence || 0;
+    const fakePercent = predInfo.fakePercent || 0;
+    const prediction = predInfo.prediction || 'N/A';
+    
+    return `
+        <div class="space-y-6">
+            <!-- Resultados del Modelo -->
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-4 flex items-center">
+                    <i class="fas fa-brain text-purple-500 dark:text-purple-400 mr-3"></i>
+                    Resultados del Modelo
+                </h5>
+                <div class="space-y-3">
+                    <div class="debug-item-simple">
+                        <span class="text-purple-600 dark:text-purple-300">Predicción:</span>
+                        <span class="debug-badge-simple ${getBadgeClass(prediction)}">${prediction}</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-purple-600 dark:text-purple-300">Confianza:</span>
+                        <span class="text-gray-900 dark:text-white font-medium">${confidence}%</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-purple-600 dark:text-purple-300">Probabilidad Fake:</span>
+                        <span class="text-gray-900 dark:text-white font-medium">${fakePercent}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Análisis Técnico -->
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-4 flex items-center">
+                    <i class="fas fa-cogs text-blue-500 dark:text-blue-400 mr-3"></i>
+                    Análisis Técnico
+                </h5>
+                <div class="space-y-2">
+                    <div class="debug-item-simple">
+                        <span class="text-blue-600 dark:text-blue-300">BERT dice:</span>
+                        <span class="text-gray-900 dark:text-white">${debugInfo.bert_says || 'N/A'}</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-blue-600 dark:text-blue-300">Decisión final:</span>
+                        <span class="text-gray-900 dark:text-white">${debugInfo.final_decision || 'N/A'}</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-blue-600 dark:text-blue-300">Umbral usado:</span>
+                        <span class="text-gray-900 dark:text-white">${debugInfo.threshold_used || 'N/A'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas del Contenido -->
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-4 flex items-center">
+                    <i class="fas fa-ruler text-green-500 dark:text-green-400 mr-3"></i>
+                    Métricas del Contenido
+                </h5>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="debug-metric-simple">
+                        <div class="text-green-600 dark:text-green-300 text-sm">Título</div>
+                        <div class="text-gray-900 dark:text-white font-medium">${(debugInfo.title_length || 0).toLocaleString()}</div>
+                    </div>
+                    <div class="debug-metric-simple">
+                        <div class="text-green-600 dark:text-green-300 text-sm">Contenido</div>
+                        <div class="text-gray-900 dark:text-white font-medium">${(debugInfo.text_length || 0).toLocaleString()}</div>
+                    </div>
+                    <div class="debug-metric-simple">
+                        <div class="text-green-600 dark:text-green-300 text-sm">Total</div>
+                        <div class="text-gray-900 dark:text-white font-medium">${((debugInfo.title_length || 0) + (debugInfo.text_length || 0)).toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+
+            ${generateTypeSpecificContent(debugInfo, analysisType, isUrl, isOcr)}
+            
+            ${debugInfo.recommendation ? `
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-3 flex items-center">
+                    <i class="fas fa-lightbulb text-gray-600 dark:text-gray-400 mr-3"></i>
+                    Recomendación
+                </h5>
+                <div class="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-60 p-3 rounded-lg border-l-4 border-gray-500 dark:border-gray-500">
+                    ${debugInfo.recommendation}
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function generateTypeSpecificContent(debugInfo, analysisType, isUrl, isOcr) {
+    if (isUrl) {
+        return `
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-4 flex items-center">
+                    <i class="fas fa-globe text-cyan-500 dark:text-cyan-400 mr-3"></i>
+                    Análisis por URL
+                </h5>
+                <div class="space-y-2">
+                    <div class="debug-item-simple">
+                        <span class="text-cyan-600 dark:text-cyan-300">Contenido original:</span>
+                        <span class="text-gray-900 dark:text-white">${(debugInfo.original_content_length || 0).toLocaleString()} caracteres</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-cyan-600 dark:text-cyan-300">Optimizado a:</span>
+                        <span class="text-gray-900 dark:text-white">${(debugInfo.truncated_content_length || 0).toLocaleString()} caracteres</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-cyan-600 dark:text-cyan-300">Truncado:</span>
+                        <span class="text-gray-900 dark:text-white ${debugInfo.truncation_applied ? 'text-yellow-600 dark:text-yellow-300' : 'text-green-600 dark:text-green-300'}">
+                            ${debugInfo.truncation_applied ? 'Sí' : 'No'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (isOcr) {
+        return `
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-4 flex items-center">
+                    <i class="fas fa-image text-orange-500 dark:text-orange-400 mr-3"></i>
+                    Análisis por OCR
+                </h5>
+                <div class="space-y-2">
+                    <div class="debug-item-simple">
+                        <span class="text-orange-600 dark:text-orange-300">Método:</span>
+                        <span class="text-gray-900 dark:text-white">OCR.space API</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-orange-600 dark:text-orange-300">Texto extraído:</span>
+                        <span class="text-gray-900 dark:text-white">${(debugInfo.text_length || 0).toLocaleString()} caracteres</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (analysisType === 'Archivo subido') {
+        return `
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-4 flex items-center">
+                    <i class="fas fa-file-alt text-indigo-500 dark:text-indigo-400 mr-3"></i>
+                    Análisis por Archivo
+                </h5>
+                <div class="space-y-2">
+                    <div class="debug-item-simple">
+                        <span class="text-indigo-600 dark:text-indigo-300">Procesamiento:</span>
+                        <span class="text-gray-900 dark:text-white">Separación automática de título y contenido</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="debug-section-simple">
+                <h5 class="text-gray-900 dark:text-white font-semibold mb-4 flex items-center">
+                    <i class="fas fa-keyboard text-pink-500 dark:text-pink-400 mr-3"></i>
+                    Análisis Manual
+                </h5>
+                <div class="space-y-2">
+                    <div class="debug-item-simple">
+                        <span class="text-pink-600 dark:text-pink-300">Tipo:</span>
+                        <span class="text-gray-900 dark:text-white">Texto ingresado directamente</span>
+                    </div>
+                    <div class="debug-item-simple">
+                        <span class="text-pink-600 dark:text-pink-300">Separación:</span>
+                        <span class="text-gray-900 dark:text-white">Título y contenido procesados por separado</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function getBadgeClass(prediction) {
+    if (prediction === 'Fake') return 'badge-danger';
+    if (prediction === 'Real') return 'badge-success';
+    return 'badge-warning';
 }
 
 darkModeToggle.addEventListener('change', function () {
@@ -236,12 +357,59 @@ const CONFIG = {
 // VARIABLES GLOBALES
 // =====================================================================
 let INPUT_MODE = 'text'; // 'text' | 'file' | 'image' | 'url'
+let EXAMPLES_DATA = null; // Cache para los ejemplos
+
+// =====================================================================
+// CARGA DE EJEMPLOS
+// =====================================================================
+async function loadExamplesData() {
+    if (EXAMPLES_DATA) return EXAMPLES_DATA; // Retornar cache si existe
+    
+    try {
+        const response = await fetch('/static/examples.json');
+        if (!response.ok) throw new Error('No se pudieron cargar los ejemplos');
+        EXAMPLES_DATA = await response.json();
+        return EXAMPLES_DATA;
+    } catch (error) {
+        console.warn('Error cargando ejemplos:', error);
+        // Fallback con ejemplos embebidos
+        EXAMPLES_DATA = {
+            fake_examples: [
+                {
+                    title: "¡INCREÍBLE! Médicos ocultan cura milagrosa del cáncer",
+                    content: "Los médicos no quieren que sepas este truco secreto que cura el cáncer en solo 3 días..."
+                }
+            ],
+            real_examples: [
+                {
+                    title: "Nuevo tratamiento para diabetes tipo 2 muestra resultados prometedores",
+                    content: "Investigadores de la Universidad de Harvard publicaron en Nature Medicine..."
+                }
+            ]
+        };
+        return EXAMPLES_DATA;
+    }
+}
+
+function getRandomExample() {
+    if (!EXAMPLES_DATA) return null;
+    
+    // Combinar ejemplos falsos y reales
+    const allExamples = [
+        ...EXAMPLES_DATA.fake_examples,
+        ...EXAMPLES_DATA.real_examples
+    ];
+    
+    // Seleccionar ejemplo aleatorio
+    const randomIndex = Math.floor(Math.random() * allExamples.length);
+    return allExamples[randomIndex];
+}
 
 // =====================================================================
 // INICIALIZACIÓN DE LA APLICACIÓN
 // =====================================================================
 function initializeApplication() {
-    initializePreloader(); // <- añadir
+    initializePreloader();
     createParticles();
     initializeSidebar();
     initializeCharacterCounter();
@@ -253,6 +421,9 @@ function initializeApplication() {
     initializeFileMode();
     initializeUrlMode();
     hydrateHistoryUI();
+    
+    // Precargar ejemplos en background
+    loadExamplesData().catch(console.warn);
 }
 // Preloader (1s y fade-out)
 function initializePreloader() {
@@ -388,7 +559,7 @@ async function analyzeText() {
     const debugBtn = document.getElementById('debug-btn');
     if (debugPanel && debugBtn) {
         debugPanel.classList.add('hidden');
-        debugBtn.innerHTML = '<i class="fas fa-code"></i><span>Ver Debug</span>';
+        debugBtn.innerHTML = '<i class="fas fa-code text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ver Debug</span>';
     }
 
     let response, payload;
@@ -446,6 +617,7 @@ async function analyzeText() {
             const errData = await response.json().catch(() => ({}));
             throw new Error(errData.error || 'Error en el servidor');
         }
+        
         payload = await response.json();
 
         const percent = Math.round((payload.probability || 0) * 100);
@@ -523,6 +695,10 @@ async function analyzeText() {
             prediction: payload.prediction,
             label: payload.label 
         });
+        
+        // Solo mostrar la tarjeta de resultados si todo fue exitoso
+        resultCard.classList.remove('hidden');
+        
     } catch (e) {
         Swal.fire({
             title: 'Error',
@@ -531,9 +707,12 @@ async function analyzeText() {
             background: 'rgba(0, 0, 0, 0.8)',
             color: 'white'
         });
+        
+        // Asegurar que la tarjeta de resultados permanece oculta cuando hay error
+        resultCard.classList.add('hidden');
+        
     } finally {
         loading.classList.add('hidden');
-        resultCard.classList.remove('hidden');
     }
 }
 
@@ -570,11 +749,24 @@ function initializeFileMode() {
     
     function setMode(mode) {
         INPUT_MODE = mode;
+        const sampleBtn = document.getElementById('sample-btn');
+        
+        // Controlar visibilidad de elementos
         textMode.classList.toggle('hidden', mode !== 'text');
         textMode.classList.toggle('block', mode === 'text');
         fileMode.classList.toggle('hidden', mode !== 'file');
         imageMode.classList.toggle('hidden', mode !== 'image');
         if (urlMode) urlMode.classList.toggle('hidden', mode !== 'url');
+        
+        // Ocultar botón "Ejemplo" para archivos, imágenes y URLs
+        if (sampleBtn) {
+            if (mode === 'file' || mode === 'image' || mode === 'url') {
+                sampleBtn.style.display = 'none';
+            } else {
+                sampleBtn.style.display = 'flex'; // Mostrar como flex para mantener el layout
+            }
+        }
+        
         updateButton();
     }
     
@@ -692,18 +884,56 @@ function initializeUrlMode() {
 // FUNCIONALIDAD DE TEXTO DE EJEMPLO
 // =====================================================================
 function initializeSampleText() {
-    document.getElementById('sample-btn').addEventListener('click', () => {
+    document.getElementById('sample-btn').addEventListener('click', async () => {
         const textarea = document.getElementById('news-text');
         const titleInput = document.getElementById('news-title');
+        const sampleBtn = document.getElementById('sample-btn');
         
-        const sampleTitle = `¡INCREÍBLE! Médicos ocultan cura milagrosa del cáncer`;
-        const sampleText = `Los médicos no quieren que sepas este truco secreto que cura el cáncer en solo 3 días. Esta increíble solución natural elimina tumores en 24 horas y está disponible en tu cocina. Miles de médicos están furiosos por este simple truco que podría acabar con la industria médica para siempre. El gobierno oculta esta información porque las farmacéuticas perderían millones. ¡Descubre el secreto que puede salvarte la vida antes de que lo borren!`;
+        // Mostrar estado de carga
+        const originalContent = sampleBtn.innerHTML;
+        sampleBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-600 dark:text-yellow-400"></i><span>Cargando...</span>';
+        sampleBtn.disabled = true;
+        
+        try {
+            // Cargar ejemplos si no están cargados
+            await loadExamplesData();
+            
+            // Obtener ejemplo aleatorio
+            const example = getRandomExample();
+            
+            if (example) {
+                titleInput.value = example.title;
+                textarea.value = example.content;
+                
+                // Disparar eventos para actualizar contadores
+                titleInput.dispatchEvent(new Event('input'));
+                textarea.dispatchEvent(new Event('input'));
 
-        titleInput.value = sampleTitle;
-        textarea.value = sampleText;
-        
-        titleInput.dispatchEvent(new Event('input'));
-        textarea.dispatchEvent(new Event('input'));
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => document.body.removeChild(toast), 300);
+                }, 2000);
+                
+            } else {
+                throw new Error('No se pudo obtener ejemplo');
+            }
+        } catch (error) {
+            console.error('Error cargando ejemplo:', error);
+            
+            // Fallback al ejemplo original
+            const sampleTitle = `¡INCREÍBLE! Médicos ocultan cura milagrosa del cáncer`;
+            const sampleText = `Los médicos no quieren que sepas este truco secreto que cura el cáncer en solo 3 días. Esta increíble solución natural elimina tumores en 24 horas y está disponible en tu cocina. Miles de médicos están furiosos por este simple truco que podría acabar con la industria médica para siempre. El gobierno oculta esta información porque las farmacéuticas perderían millones. ¡Descubre el secreto que puede salvarte la vida antes de que lo borren!`;
+
+            titleInput.value = sampleTitle;
+            textarea.value = sampleText;
+            
+            titleInput.dispatchEvent(new Event('input'));
+            textarea.dispatchEvent(new Event('input'));
+        } finally {
+            // Restaurar botón
+            sampleBtn.innerHTML = originalContent;
+            sampleBtn.disabled = false;
+        }
     });
 }
 
@@ -731,6 +961,11 @@ function initializeClearButton() {
         }
         if (urlPreview) {
             urlPreview.classList.add('hidden');
+        }
+        
+        // Volver al modo texto y mostrar botón de ejemplo
+        if (window.__setInputMode) {
+            window.__setInputMode('text');
         }
         
         // Ocultar resultados

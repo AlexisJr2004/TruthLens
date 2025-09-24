@@ -1,0 +1,46 @@
+{
+  "fake_examples": [
+    {
+      "title": "¡INCREÍBLE! Médicos ocultan cura milagrosa del cáncer",
+      "content": "Los médicos no quieren que sepas este truco secreto que cura el cáncer en solo 3 días. Esta increíble solución natural elimina tumores en 24 horas y está disponible en tu cocina. Miles de médicos están furiosos por este simple truco que podría acabar con la industria médica para siempre. El gobierno oculta esta información porque las farmacéuticas perderían millones. ¡Descubre el secreto que puede salvarte la vida antes de que lo borren!"
+    },
+    {
+      "title": "URGENTE: Vacunas causan autismo según estudio secreto",
+      "content": "Un estudio clasificado por el gobierno revela que las vacunas causan autismo en el 90% de los niños. Los medios mainstream se niegan a reportar esta información porque están pagados por las farmacéuticas. Doctores independientes confirman que miles de niños han desarrollado autismo después de vacunarse. ¡Protege a tus hijos de esta conspiración!"
+    },
+    {
+      "title": "BREAKING: 5G mata células cerebrales en minutos",
+      "content": "Científicos rusos prueban que las torres 5G destruyen neuronas instantáneamente. El gobierno sabe esto pero continúa instalando antenas para controlar nuestras mentes. Personas que viven cerca de torres 5G reportan dolores de cabeza, pérdida de memoria y comportamiento extraño. ¡La élite mundial quiere zombificar a la población!"
+    },
+    {
+      "title": "SHOCK: Agua del grifo contiene chips de seguimiento",
+      "content": "Investigadores descubren nanotecnología de rastreo en el agua potable de todas las ciudades. Estos microchips permiten al gobierno monitorear cada movimiento de los ciudadanos. Las empresas de agua están en complot con agencias de espionaje para crear una sociedad de vigilancia total. ¡Solo el agua destilada es segura!"
+    },
+    {
+      "title": "EXCLUSIVO: La Tierra es plana y NASA lo oculta",
+      "content": "Documentos filtrados de la NASA confirman que la Tierra es plana y han gastado billones en mantener esta mentira. Los astronautas son actores pagados y las fotos del espacio son generadas por computadora. La Antártida es un muro de hielo que rodea nuestro mundo plano. ¡Despierta y ve la verdad!"
+    }
+  ],
+  "real_examples": [
+    {
+      "title": "Nuevo tratamiento para diabetes tipo 2 muestra resultados prometedores",
+      "content": "Investigadores de la Universidad de Harvard publicaron en Nature Medicine los resultados de un ensayo clínico de fase III que evaluó un nuevo medicamento para diabetes tipo 2. El estudio, realizado durante 18 meses con 2,400 pacientes, mostró una reducción del 1.2% en los niveles de HbA1c comparado con placebo. Los efectos secundarios más comunes fueron náuseas leves y dolor de cabeza. El medicamento aún debe ser aprobado por la FDA."
+    },
+    {
+      "title": "Científicos desarrollan batería solar que se carga de noche",
+      "content": "Investigadores del MIT han desarrollado una celda fotovoltaica que puede generar electricidad durante la noche usando radiación térmica. El dispositivo utiliza un diodo termofotovoltaico que convierte el calor radiante en electricidad. Aunque la potencia generada es menor que las celdas solares convencionales, representa un avance significativo en energías renovables. El estudio fue publicado en la revista Nature Energy."
+    },
+    {
+      "title": "Estudio revela beneficios de la dieta mediterránea para la salud cerebral",
+      "content": "Una investigación de 5 años con 12,000 participantes mayores de 65 años encontró que seguir una dieta mediterránea reduce el riesgo de deterioro cognitivo en un 13%. El estudio, publicado en Neurology, mostró que el consumo regular de aceite de oliva, pescado, nueces y vegetales está asociado con mejor función cognitiva. Los investigadores de la Universidad de Barcelona lideraron este ensayo controlado aleatorizado."
+    },
+    {
+      "title": "Nueva especie de dinosaurio descubierta en Argentina",
+      "content": "Paleontólogos argentinos describieron una nueva especie de saurópodo titanosaur en la formación Candeleros de Neuquén. El Meraxes gigas, que vivió hace 90 millones de años, medía 11 metros de largo y pesaba 4 toneladas. El hallazgo, publicado en Current Biology, incluye el esqueleto más completo de un carcarodontosáurido encontrado en Sudamérica, proporcionando nueva información sobre la evolución de estos depredadores."
+    },
+    {
+      "title": "Telescopio James Webb observa galaxias más antiguas del universo",
+      "content": "El Telescopio Espacial James Webb ha identificado galaxias que se formaron apenas 400 millones de años después del Big Bang. Estas observaciones, publicadas en Astrophysical Journal, revelan que las primeras galaxias eran más masivas de lo esperado. El equipo internacional de astrónomos utilizó el instrumento NIRCam para detectar estas galaxias primitivas, cuya luz ha viajado más de 13 mil millones de años."
+    }
+  ]
+}

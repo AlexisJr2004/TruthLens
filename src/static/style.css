@@ -149,7 +149,7 @@ input:checked + .toggle-slider:before {
 .btn-secondary {
   /* Deja el fondo a Tailwind (bg-*) o aplica por modo con .dark */
   background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* border: 1px solid rgba(255, 255, 255, 0.2); */
   transition: all 0.3s ease;
 }
 
@@ -352,4 +352,100 @@ input:checked + .toggle-slider:before {
 .preloader.fade-out {
   opacity: 0;
   pointer-events: none;
+}
+
+/* Debug Panel Styles - Simplified */
+.debug-section-simple {
+  background: rgba(139, 92, 246, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.dark .debug-section-simple {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.debug-item-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.dark .debug-item-simple {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.debug-item-simple:last-child {
+  border-bottom: none;
+}
+
+.debug-metric-simple {
+  text-align: center;
+  padding: 12px;
+  background: rgba(156, 163, 175, 0.1);
+  border-radius: 6px;
+}
+
+.dark .debug-metric-simple {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.debug-progress-simple {
+  background: rgba(139, 92, 246, 0.2);
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+  width: 120px;
+}
+
+.debug-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.debug-badge-simple {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.dark .badge-danger {
+  color: #fca5a5;
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark .badge-success {
+  color: #86efac;
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.dark .badge-warning {
+  color: #fcd34d;
 }

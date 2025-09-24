@@ -15,7 +15,6 @@ from config.settings import (
 # Utilidades modularizadas
 from utils.models.model_manager import get_truth_lens_model, get_news_extractor
 from utils.file_extractors import extract_text_from_file
-from utils.recommendations import get_recommendation
 from utils.response_helpers import create_debug_info, create_standard_response, create_error_response
 
 # CONFIGURACIÓN DE LA APLICACIÓN FLASK
@@ -225,65 +224,6 @@ def analyze_url():
         return jsonify(*create_error_response(f"Error al acceder a la URL: {str(e)}", 502))
     except Exception as e:
         return jsonify(*create_error_response(f"Error al procesar la noticia: {str(e)}", 500))
-
-@app.route("/diagnose", methods=["POST"])
-def diagnose():
-    """Endpoint especial para diagnosticar en detalle cómo funciona el modelo"""
-    payload = request.get_json(silent=True) or {}
-    text = payload.get("text", "").strip()
-    title = payload.get("title", "")
-    
-    if not text and not title:
-        return jsonify(*create_error_response("Se requiere texto o título para diagnosticar", 400))
-    
-    try:
-        # 🎯 MEJORA: Mantener consistencia con /predict
-        # No generar título automático, analizar tal como el usuario lo envió
-        # Obtener predicción completa usando la MISMA lógica que /predict
-        result = get_truth_lens_model().predict(title, text)
-        
-        # Análisis adicional
-        combined_text = f"{title} {text}".strip()
-        text_clean = get_truth_lens_model().clean_text(combined_text)
-        tokens = get_truth_lens_model().tokenizer.tokenize(text_clean)
-        
-        # Palabras que podrían estar influyendo
-        suspicious_words = ['militar', 'escalada', 'pulverizado', 'cártel', 'droga', 'secreto', 'increíble', 'bomba', 'milagroso', 'oculto', 'truco']
-        found_words = [word for word in suspicious_words if word.lower() in text_clean.lower()]
-        
-        return jsonify({
-            "text_analysis": {
-                "original_length": len(combined_text),
-                "cleaned_length": len(text_clean),
-                "num_tokens": len(tokens),
-                "tokens_preview": tokens[:20],
-                "suspicious_words_found": found_words,
-                "title_length": len(title),
-                "content_length": len(text)
-            },
-            "model_response": {
-                "raw_probabilities": {
-                    "fake": result.get('probability_fake', 0),
-                    "true": result.get('probability_true', 0)
-                },
-                "threshold_used": result.get('threshold_used', 0.7),
-                "decision_confidence": result.get('decision_confidence', 'UNKNOWN'),
-                "calibration_applied": result.get('calibration_applied', False)
-            },
-            "final_decision": {
-                "prediction": result['prediction'],
-                "confidence": result.get('confidence', 0),
-                "recommendation": get_recommendation(result)
-            },
-            "interpretation": {
-                "what_bert_thinks": f"BERT cree que es {result.get('probability_fake', 0):.1%} fake",
-                "what_we_decided": f"Decidimos: {result['prediction']}",
-                "why": f"Usamos umbral {result.get('threshold_used', 0.7):.2f} porque la diferencia de probabilidades es {result.get('probability_difference', 0):.2f}",
-                "consistency_check": "✅ CONSISTENTE con endpoint /predict"
-            }
-        })
-    except Exception as e:
-        return jsonify({"error": f"Error en diagnóstico: {str(e)}"}), 500
 
 @app.route("/ocr_predict", methods=["POST"])
 def ocr_predict():

@@ -1,9 +1,7 @@
 """
 Funciones auxiliares para generar respuestas de la API
 """
-
 from utils.recommendations import get_recommendation
-
 
 def create_debug_info(result, title="", text="", extraction_method="Manual", file_info="", **kwargs):
     """

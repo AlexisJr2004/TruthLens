@@ -2,7 +2,6 @@
 Script para extraer contenido de páginas de noticias
 Extrae título, contenido, fecha, autor y otros metadatos de artículos de noticias
 """
-
 import os
 import requests
 from bs4 import BeautifulSoup
