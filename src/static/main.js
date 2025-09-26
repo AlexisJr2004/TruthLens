@@ -90,48 +90,206 @@ function setupShareAndDownload() {
         };
     }
 
-    // --- Descargar ---
+    // --- Descargar (PDF bien estructurado) ---
     if (downloadBtn) {
         downloadBtn.onclick = function () {
-            // Capturar valores en tiempo real
-            const title = document.getElementById('result-title')?.textContent || '';
-            const badge = document.getElementById('confidence-badge')?.textContent || '';
-            const prob = document.getElementById('result-prob')?.textContent || '';
-            const description = document.getElementById('result-description')?.textContent || '';
-            
-            // Obtener el contenido extraído más reciente
-            let preview = '';
-            if (window.currentExtractedPreview) {
-                preview = window.currentExtractedPreview;
-            } else {
-                // Fallback a los elementos del DOM
-                preview = document.getElementById('url-preview-content')?.textContent || 
-                         document.getElementById('news-text')?.value || '';
-            }
-            
-            // Incluir información de debug si está disponible
-            let debugInfo = '';
-            if (window.currentDebugInfo && window.currentPredictionInfo) {
-                debugInfo = `\n\nInformación de Debug:\n` +
-                           `- Método: ${window.currentDebugInfo.extraction_method || 'Desconocido'}\n` +
-                           `- Predicción BERT: ${window.currentDebugInfo.bert_says || 'N/A'}\n` +
-                           `- Confianza: ${window.currentPredictionInfo.confidence || 0}%\n` +
-                           `- Prob. Fake: ${(window.currentDebugInfo.probability_fake * 100).toFixed(1)}%\n` +
-                           `- Prob. Real: ${(window.currentDebugInfo.probability_true * 100).toFixed(1)}%`;
-            }
-            
-            const report = `Reporte TruthLens\n====================\n\nResultado: ${title} (${badge})\nConfianza: ${prob}\n\n${description}\n\nExtracto:\n${preview}${debugInfo}\n\nFecha: ${new Date().toLocaleString()}`;
-            const blob = new Blob([report], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'reporte_truthlens.txt';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 100);
+            (async function () {
+                try {
+                    // Capturar valores en tiempo real
+                    const title = document.getElementById('result-title')?.textContent || '';
+                    const badge = document.getElementById('confidence-badge')?.textContent || '';
+                    const prob = document.getElementById('result-prob')?.textContent || '';
+                    const description = document.getElementById('result-description')?.textContent || '';
+
+                    // Obtener el contenido extraído más reciente (preview)
+                    let preview = '';
+                    if (window.currentExtractedPreview) {
+                        preview = window.currentExtractedPreview;
+                    } else {
+                        preview = document.getElementById('url-preview-content')?.textContent ||
+                                document.getElementById('news-text')?.value || '';
+                    }
+
+                    // Info de debug / predicción
+                    const debugInfo = window.currentDebugInfo || {};
+                    const predInfo = window.currentPredictionInfo || {};
+
+                    // Helper: formatea la info de debug/predicción en texto legible
+                    function formatDebug(debugObj, predObj) {
+                        let out = '';
+                        if (predObj && Object.keys(predObj).length) {
+                            out += `Predicción: ${predObj.prediction || 'N/A'}\n`;
+                            out += `Confianza: ${predObj.confidence || 0}%\n`;
+                            out += `Prob. Fake: ${predObj.fakePercent || 0}%\n`;
+                            out += `Prob. Real: ${predObj.truePercent || 0}%\n`;
+                            out += `Label: ${predObj.label || 'N/A'}\n\n`;
+                        }
+                        if (debugObj && Object.keys(debugObj).length) {
+                            out += `Método: ${debugObj.extraction_method || 'Desconocido'}\n`;
+                            out += `BERT dice: ${debugObj.bert_says || 'N/A'}\n`;
+                            out += `Decisión final: ${debugObj.final_decision || 'N/A'}\n`;
+                            out += `Umbral usado: ${debugObj.threshold_used || 'N/A'}\n`;
+                            out += `Confianza decisión: ${debugObj.decision_confidence || 'N/A'}\n`;
+                            out += `Calibración aplicada: ${debugObj.calibration_applied ? 'SÍ' : 'NO'}\n`;
+                            if (debugObj.recommendation) out += `Recomendación: ${debugObj.recommendation}\n`;
+                            out += `\nLongitudes:\n`;
+                            out += `- Título: ${debugObj.title_length || 0} chars\n`;
+                            out += `- Contenido: ${debugObj.text_length || 0} chars\n`;
+                            out += `- Total: ${debugObj.combined_length || 0} chars\n`;
+                            if (debugObj.truncation_applied !== undefined) {
+                                out += `\nURL/Truncado:\n`;
+                                out += `- Truncado aplicado: ${debugObj.truncation_applied ? 'SÍ' : 'NO'}\n`;
+                                out += `- Original length: ${debugObj.original_content_length || 'N/A'}\n`;
+                                out += `- Truncado length: ${debugObj.truncated_content_length || 'N/A'}\n`;
+                                if (debugObj.optimization_applied) out += `- Optimización: ${debugObj.optimization_applied}\n`;
+                            }
+                            if (debugObj.text_preview) {
+                                out += `\nVista previa OCR:\n${debugObj.text_preview}\n`;
+                            }
+                        }
+                        return out || 'No hay información de debug disponible.';
+                    }
+
+                    // Preferir logo igual que el favicon; fallback a rutas comunes
+                    const logoCandidate = document.querySelector('link[rel="icon"]')?.getAttribute('href') || 'static/img/logo.png';
+                    // Construir contenedor de reporte (no visible)
+                    const reportEl = document.createElement('div');
+                    reportEl.style.boxSizing = 'border-box';
+                    reportEl.style.width = '800px';
+                    reportEl.style.padding = '20px';
+                    reportEl.style.fontFamily = 'Arial, Helvetica, sans-serif';
+                    reportEl.style.color = '#222';
+                    reportEl.style.background = '#ffffff';
+                    // Detectar color desde el badge
+                    let badgeColor = '#333';
+                    const badgeEl = document.getElementById('confidence-badge');
+                    if (badgeEl) {
+                        badgeColor = window.getComputedStyle(badgeEl).backgroundColor || '#333';
+                    }
+                    // Mapear colores "fuertes"
+                    const colorMap = {
+                        'rgb(244, 67, 54)': '#d32f2f',   // rojo más intenso
+                        'rgb(76, 175, 80)': '#2e7d32',   // verde oscuro
+                        'rgb(33, 150, 243)': '#1565c0',  // azul intenso
+                        'rgb(255, 193, 7)': '#f9a825'    // amarillo oscuro
+                    };
+                    if (colorMap[badgeColor]) {
+                        badgeColor = colorMap[badgeColor];
+                    }
+
+                    // Reusar sanitizeText si existe; si no, simple escape
+                    const esc = typeof sanitizeText === 'function' ? sanitizeText : (s) => {
+                        const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+                    };
+
+                    reportEl.innerHTML = `
+                        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+                            <img src="${logoCandidate}" alt="Logo" style="width:72px;height:72px;object-fit:contain"/>
+                            <div>
+                                <h1 style="margin:0;font-size:22px">TruthLens</h1>
+                                <div style="font-size:12px;color:#666">Reporte de Análisis</div>
+                            </div>
+                        </div>
+                        <div style="height:6px;width:100%;background:${badgeColor};margin:8px 0 14px 0;border-radius:3px"></div>
+
+                        <h2 style="font-size:18px;margin:6px 0;color:${badgeColor}">${esc(title)}</h2>
+                        <div style="margin:6px 0">
+                            <strong>Resultado:</strong> <span style="color:${badgeColor};font-weight:bold">${esc(badge)}</span> 
+                            — <strong>Confianza:</strong> ${esc(prob)}
+                        </div>
+                        <div style="margin-top:12px"><em>${esc(description)}</em></div>
+
+                        <h3 style="margin-top:16px;color:${badgeColor}">Extracto</h3>
+                        <pre style="white-space: pre-wrap;word-wrap: break-word;overflow-wrap: break-word;max-width:100%;max-height:500px;overflow:auto;box-sizing:border-box;background:#f7f7f7;padding:12px;border-radius:8px">${esc(preview)}</pre>
+                        <h3 style="margin-top:16px;color:${badgeColor}">Información de Debug</h3>
+                        <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; max-width:100%; box-sizing:border-box; background:#f0f0f0;padding:12px;border-radius:8px">${esc(formatDebug(debugInfo, predInfo))}</pre>
+
+                        <div style="text-align:right;margin-top:18px;font-size:11px;color:#666">Generado: ${new Date().toLocaleString()}</div>
+                    `;
+
+
+
+                    // Añadir al DOM (fuera de la pantalla) para que html2canvas pueda renderizar imágenes
+                    reportEl.style.position = 'fixed';
+                    reportEl.style.left = '-9999px';
+                    document.body.appendChild(reportEl);
+
+                    // Generar PDF usando html2canvas + addImage
+                    // Generar PDF usando html2canvas + addImage con slicing real
+                    const { jsPDF } = window.jspdf || {};
+                    if (!jsPDF) throw new Error('jsPDF no está cargado.');
+
+                    // Esperar a que las imágenes del reporte carguen
+                    const imgs = reportEl.querySelectorAll("img");
+                    await Promise.all(Array.from(imgs).map(img => {
+                        if (img.complete) return Promise.resolve();
+                        return new Promise(res => { img.onload = res; img.onerror = res; });
+                    }));
+
+                    // Renderizar a canvas
+                    const canvas = await html2canvas(reportEl, { scale: 2 });
+                    const imgWidth = 555; // ancho aprox A4 (595pt - márgenes)
+                    const pageHeight = 842; // alto A4 en pt
+                    const pageWidth = 595;  // ancho A4 en pt
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+
+                    const pdf = new jsPDF("p", "pt", "a4");
+
+                    // Altura visible por página en px del canvas
+                    const pageCanvasHeight = canvas.width * (pageHeight / imgWidth);
+
+                    // Número de páginas
+                    let remainingHeight = canvas.height;
+                    let position = 0;
+                    let page = 0;
+
+                    while (remainingHeight > 0) {
+                        // Crear un canvas temporal del tamaño de una página
+                        const pageCanvas = document.createElement("canvas");
+                        pageCanvas.width = canvas.width;
+                        pageCanvas.height = Math.min(pageCanvasHeight, remainingHeight);
+
+                        const ctx = pageCanvas.getContext("2d");
+                        ctx.drawImage(
+                            canvas,
+                            0, position,                     // origen x,y en el canvas original
+                            canvas.width, pageCanvas.height, // ancho, alto a recortar
+                            0, 0,                            // destino x,y
+                            canvas.width, pageCanvas.height  // destino ancho, alto
+                        );
+
+                        const pageData = pageCanvas.toDataURL("image/png");
+                        if (page > 0) pdf.addPage();
+                        pdf.addImage(pageData, "PNG", 20, 20, imgWidth, pageCanvas.height * (imgWidth / canvas.width));
+
+                        // Footer en cada página
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(100);
+                        pdf.text(`Generado: ${new Date().toLocaleString()}`, pageWidth - 150, pageHeight - 20);
+
+                        remainingHeight -= pageCanvasHeight;
+                        position += pageCanvasHeight;
+                        page++;
+                    }
+
+                    pdf.save("reporte_truthlens.pdf");
+
+                    // Limpieza
+                    if (reportEl && reportEl.parentNode) reportEl.parentNode.removeChild(reportEl);
+
+
+
+                } catch (err) {
+                    console.error('Error generando PDF:', err);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo generar el PDF: ' + (err && err.message ? err.message : err),
+                        icon: 'error',
+                        background: 'rgba(0,0,0,0.8)',
+                        color: 'white'
+                    });
+                }
+            })();
         };
     }
 }

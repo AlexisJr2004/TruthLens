@@ -1,11 +1,36 @@
+# Entornos virtuales
 .venv/
-temp/
+venv/
+
+# Caché de Python
 __pycache__/
-copia_seguridad.html
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos temporales
+temp/
+~$*.xlsx
+*.log
+
+# Modelos (excepto los de utils)
 models/
 !utils/models/
-~$*.xlsx
+
+# Archivos de datos generados
 eda_outputs/
+*.pkl
+*.pt
+*.pth
+*.h5
+
+# Archivos de entorno
+.env
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Archivos específicos
+copia_seguridad.html
 test_*.py
 MIGRATION_BERT.md
-.env
