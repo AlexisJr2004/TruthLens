@@ -1,6 +1,7 @@
 // =====================================================================
 // CHATBOT DE PREGUNTAS FRECUENTES MEJORADO
 // =====================================================================
+
 document.addEventListener('DOMContentLoaded', function () {
     const chatbotBtn = document.getElementById('chatbot-btn');
     const chatbotWindow = document.getElementById('chatbot-window');

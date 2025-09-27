@@ -1,11 +1,231 @@
 // =====================================================================
-// NEWS ANALYZER - SCRIPT PRINCIPAL DE LA APLICACIÓN
+// NEWS ANALYZER - APLICACIÓN DE ANÁLISIS DE NOTICIAS
 // =====================================================================
 
 // =====================================================================
-// BOTÓN DE IR ARRIBA
+// 1. CONFIGURACIÓN Y CONSTANTES
 // =====================================================================
-document.addEventListener('DOMContentLoaded', function () {
+
+const CONFIG = {
+    PARTICLE_COUNT: 50,
+    MAX_HISTORY_ITEMS: 15,
+    MAX_FILE_SIZE_MB: 8,
+    CHAR_LIMITS: {
+        WARNING: 6000,
+        DANGER: 8000
+    },
+    CONFIDENCE_THRESHOLDS: {
+        HIGH: 70,
+        MEDIUM: 40
+    }
+};
+
+// =====================================================================
+// 2. VARIABLES GLOBALES
+// =====================================================================
+
+let INPUT_MODE = 'text'; // 'text' | 'file' | 'image' | 'url'
+let EXAMPLES_DATA = null; // Cache para los ejemplos
+
+// =====================================================================
+// 3. UTILIDADES PRINCIPALES
+// =====================================================================
+
+/**
+ * Sanitiza texto para prevenir XSS
+ */
+function sanitizeText(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Obtiene el contenedor del historial
+ */
+function getHistoryContainer() {
+    return document.getElementById('history');
+}
+
+/**
+ * Carga historial desde almacenamiento (sin persistencia)
+ */
+function loadHistoryFromStorage() {
+    return [];
+}
+
+/**
+ * Guarda historial en almacenamiento (sin persistencia)
+ */
+function saveHistoryToStorage(history) {
+    // Sin persistencia: no hacer nada
+}
+
+// =====================================================================
+// 4. GESTIÓN DE EJEMPLOS
+// =====================================================================
+
+/**
+ * Carga datos de ejemplos desde el servidor
+ */
+async function loadExamplesData() {
+    if (EXAMPLES_DATA) return EXAMPLES_DATA;
+    
+    try {
+        const response = await fetch('/static/examples.json');
+        if (!response.ok) throw new Error('No se pudieron cargar los ejemplos');
+        EXAMPLES_DATA = await response.json();
+        return EXAMPLES_DATA;
+    } catch (error) {
+        console.warn('Error cargando ejemplos:', error);
+        // Fallback con ejemplos embebidos
+        EXAMPLES_DATA = {
+            fake_examples: [
+                {
+                    title: "¡INCREÍBLE! Médicos ocultan cura milagrosa del cáncer",
+                    content: "Los médicos no quieren que sepas este truco secreto que cura el cáncer en solo 3 días..."
+                }
+            ],
+            real_examples: [
+                {
+                    title: "Nuevo tratamiento para diabetes tipo 2 muestra resultados prometedores",
+                    content: "Investigadores de la Universidad de Harvard publicaron en Nature Medicine..."
+                }
+            ]
+        };
+        return EXAMPLES_DATA;
+    }
+}
+
+/**
+ * Obtiene un ejemplo aleatorio
+ */
+function getRandomExample() {
+    if (!EXAMPLES_DATA) return null;
+    
+    const allExamples = [
+        ...EXAMPLES_DATA.fake_examples,
+        ...EXAMPLES_DATA.real_examples
+    ];
+    
+    const randomIndex = Math.floor(Math.random() * allExamples.length);
+    return allExamples[randomIndex];
+}
+
+// =====================================================================
+// 5. INICIALIZACIÓN DE LA APLICACIÓN
+// =====================================================================
+
+/**
+ * Función principal de inicialización
+ */
+function initializeApplication() {
+    initializePreloader();
+    createParticles();
+    initializeSidebar();
+    initializeCharacterCounter();
+    initializeAnalysisControls();
+    initializeSampleText();
+    initializeClearButton();
+    initializeVoiceInput();
+    initializeQuickActions();
+    initializeFileMode();
+    initializeUrlMode();
+    hydrateHistoryUI();
+    
+    // Precargar ejemplos en background
+    loadExamplesData().catch(console.warn);
+}
+
+/**
+ * Inicializa el preloader con animación de fade-out
+ */
+function initializePreloader() {
+    const pre = document.getElementById('preloader');
+    if (!pre) return;
+    
+    setTimeout(() => {
+        pre.classList.add('fade-out');
+        setTimeout(() => { 
+            pre.style.display = 'none'; 
+        }, 450);
+    }, 1000);
+}
+
+// Inicializar cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', initializeApplication);
+
+// =====================================================================
+// 6. SISTEMA DE PARTÍCULAS
+// =====================================================================
+
+/**
+ * Crea las partículas animadas del fondo
+ */
+function createParticles() {
+    const particles = document.getElementById('particles');
+    if (!particles) return;
+    
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.width = Math.random() * 4 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.animationDuration = Math.random() * 15 + 10 + 's';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particles.appendChild(particle);
+    }
+}
+
+// =====================================================================
+// 7. GESTIÓN DEL TEMA (DARK MODE)
+// =====================================================================
+
+/**
+ * Inicializa el sistema de tema oscuro/claro
+ */
+function initializeDarkMode() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const html = document.documentElement;
+
+    if (!darkModeToggle) return;
+
+    // Cargar preferencia guardada
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme === 'dark') {
+        html.classList.add('dark');
+        darkModeToggle.checked = true;
+    } else if (savedTheme === 'light') {
+        html.classList.remove('dark');
+        darkModeToggle.checked = false;
+    } else {
+        // Predeterminado: claro
+        html.classList.remove('dark');
+        darkModeToggle.checked = false;
+    }
+
+    // Event listener para cambios
+    darkModeToggle.addEventListener('change', function () {
+        if (this.checked) {
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            html.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+}
+
+// =====================================================================
+// 8. BOTÓN DE SCROLL TO TOP
+// =====================================================================
+
+/**
+ * Inicializa el botón de ir arriba
+ */
+function initializeScrollTopButton() {
     const scrollBtn = document.getElementById('scroll-top-btn');
     if (!scrollBtn) return;
 
@@ -20,125 +240,422 @@ document.addEventListener('DOMContentLoaded', function () {
     scrollBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+}
+
+// Inicializar dark mode y scroll button cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', function () {
+    initializeDarkMode();
+    initializeScrollTopButton();
 });
 
 // =====================================================================
-// CONFIGURACIÓN DEL DARK MODE
+// 9. FUNCIONALIDAD DE LA BARRA LATERAL
 // =====================================================================
-// Dark mode toggle functionality
-const darkModeToggle = document.getElementById('dark-mode-toggle');
-const html = document.documentElement;
 
-// Lee preferencia guardada: 'dark' | 'light' | null
-const savedTheme = localStorage.getItem('theme');
+/**
+ * Inicializa la barra lateral y su comportamiento
+ */
+function initializeSidebar() {
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('mobile-overlay');
 
-if (savedTheme === 'dark') {
-    html.classList.add('dark');
-    darkModeToggle.checked = true;
-} else if (savedTheme === 'light') {
-    html.classList.remove('dark');
-    darkModeToggle.checked = false;
-} else {
-    // Predeterminado: claro
-    html.classList.remove('dark');
-    darkModeToggle.checked = false;
-}
-// =====================================================================
-// COMPARTIR Y DESCARGAR REPORTE
-// =====================================================================
-function setupShareAndDownload() {
-    const shareBtn = document.getElementById('share-btn');
-    const downloadBtn = document.getElementById('download-btn');
+    if (!sidebarToggle || !sidebar || !overlay) return;
 
-    // --- Compartir ---
-    if (shareBtn) {
-        shareBtn.onclick = function () {
-            // Capturar valores en tiempo real
-            const title = document.getElementById('result-title')?.textContent || '';
-            const badge = document.getElementById('confidence-badge')?.textContent || '';
-            const prob = document.getElementById('result-prob')?.textContent || '';
-            const description = document.getElementById('result-description')?.textContent || '';
-            
-            // Obtener el contenido extraído más reciente
-            let preview = '';
-            if (window.currentExtractedPreview) {
-                preview = window.currentExtractedPreview;
-            } else {
-                // Fallback a los elementos del DOM
-                preview = document.getElementById('url-preview-content')?.textContent || 
-                         document.getElementById('news-text')?.value || '';
-            }
-            
-            const shareText = `📰 TruthLens\n\nResultado: ${title} (${badge})\nConfianza: ${prob}\n\n${description}\n\nExtracto:\n${preview}`;
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Reporte TruthLens',
-                    text: shareText
-                }).catch(() => {});
-            } else {
-                // Fallback: copiar al portapapeles
-                navigator.clipboard.writeText(shareText).then(() => {
-                    Swal.fire({
-                        title: 'Copiado',
-                        text: 'Reporte copiado al portapapeles.',
-                        icon: 'success',
-                        background: 'rgba(0,0,0,0.8)',
-                        color: 'white'
-                    });
-                });
-            }
-        };
-    }
+    // Toggle barra lateral
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    });
 
-    // --- Descargar ---
-    if (downloadBtn) {
-        downloadBtn.onclick = function () {
-            // Capturar valores en tiempo real
-            const title = document.getElementById('result-title')?.textContent || '';
-            const badge = document.getElementById('confidence-badge')?.textContent || '';
-            const prob = document.getElementById('result-prob')?.textContent || '';
-            const description = document.getElementById('result-description')?.textContent || '';
-            
-            // Obtener el contenido extraído más reciente
-            let preview = '';
-            if (window.currentExtractedPreview) {
-                preview = window.currentExtractedPreview;
-            } else {
-                // Fallback a los elementos del DOM
-                preview = document.getElementById('url-preview-content')?.textContent || 
-                         document.getElementById('news-text')?.value || '';
-            }
-            
-            // Incluir información de debug si está disponible
-            let debugInfo = '';
-            if (window.currentDebugInfo && window.currentPredictionInfo) {
-                debugInfo = `\n\nInformación de Debug:\n` +
-                           `- Método: ${window.currentDebugInfo.extraction_method || 'Desconocido'}\n` +
-                           `- Predicción BERT: ${window.currentDebugInfo.bert_says || 'N/A'}\n` +
-                           `- Confianza: ${window.currentPredictionInfo.confidence || 0}%\n` +
-                           `- Prob. Fake: ${(window.currentDebugInfo.probability_fake * 100).toFixed(1)}%\n` +
-                           `- Prob. Real: ${(window.currentDebugInfo.probability_true * 100).toFixed(1)}%`;
-            }
-            
-            const report = `Reporte TruthLens\n====================\n\nResultado: ${title} (${badge})\nConfianza: ${prob}\n\n${description}\n\nExtracto:\n${preview}${debugInfo}\n\nFecha: ${new Date().toLocaleString()}`;
-            const blob = new Blob([report], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'reporte_truthlens.txt';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 100);
-        };
-    }
+    // Cerrar con overlay
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+    });
+
+    // Elementos de navegación
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
+    });
 }
 
 // =====================================================================
-// PANEL DE DEBUG
+// 10. CONTADOR DE CARACTERES
 // =====================================================================
+
+/**
+ * Inicializa el contador de caracteres dinámico
+ */
+function initializeCharacterCounter() {
+    const textarea = document.getElementById('news-text');
+    const titleInput = document.getElementById('news-title');
+    const charCount = document.getElementById('char-count');
+
+    if (!textarea || !titleInput || !charCount) return;
+
+    function updateCounter() {
+        const textCount = textarea.value.length;
+        const titleCount = titleInput.value.length;
+        const totalCount = textCount + titleCount;
+        
+        charCount.textContent = totalCount.toLocaleString();
+
+        // Cambiar color según límites
+        if (totalCount > CONFIG.CHAR_LIMITS.DANGER) {
+            charCount.style.color = '#ef4444';
+        } else if (totalCount > CONFIG.CHAR_LIMITS.WARNING) {
+            charCount.style.color = '#f59e0b';
+        } else {
+            charCount.style.color = '#6b7280';
+        }
+    }
+
+    textarea.addEventListener('input', updateCounter);
+    titleInput.addEventListener('input', updateCounter);
+}
+
+// =====================================================================
+// 11. ANÁLISIS DE TEXTO PRINCIPAL
+// =====================================================================
+
+/**
+ * Función principal para analizar texto/archivos/URLs
+ */
+async function analyzeText() {
+    const loading = document.getElementById('loading');
+    const resultCard = document.getElementById('result-card');
+    const textarea = document.getElementById('news-text');
+    const titleInput = document.getElementById('news-title');
+    const newsFile = document.getElementById('news-file');
+    const imageFile = document.getElementById('image-file');
+    const urlInput = document.getElementById('news-url');
+
+    // Limpiar datos previos
+    window.currentDebugInfo = {};
+    window.currentPredictionInfo = {};
+    window.currentExtractedPreview = '';
+
+    // Cerrar panel de debug
+    closeDebugPanel();
+
+    let response, payload;
+    let ctx = { typedText: '', typedTitle: '', file: null, img: null, url: '' };
+
+    loading.classList.remove('hidden');
+    resultCard.classList.add('hidden');
+
+    try {
+        // Determinar tipo de análisis y hacer petición
+        ({ response, ctx } = await makeAnalysisRequest(ctx, newsFile, imageFile, urlInput, textarea, titleInput));
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Error en el servidor');
+        }
+        
+        payload = await response.json();
+
+        // Procesar y mostrar resultados
+        const results = processAnalysisResults(payload, titleInput, textarea);
+        displayResults(results);
+
+        // Manejar contenido específico por tipo
+        handleSpecificContent(payload, textarea);
+
+        // Agregar al historial
+        const historyText = getHistoryText(payload, ctx);
+        addToHistory(historyText, { 
+            probability: results.fakePercent, 
+            prediction: payload.prediction,
+            label: payload.label 
+        });
+        
+        resultCard.classList.remove('hidden');
+        
+    } catch (e) {
+        handleAnalysisError(e, resultCard);
+    } finally {
+        loading.classList.add('hidden');
+    }
+}
+
+/**
+ * Realiza la petición de análisis según el modo actual
+ */
+async function makeAnalysisRequest(ctx, newsFile, imageFile, urlInput, textarea, titleInput) {
+    let response;
+
+    if (INPUT_MODE === 'file') {
+        const file = newsFile.files?.[0];
+        if (!file) throw new Error('Selecciona un archivo primero.');
+        ctx.file = file;
+        const form = new FormData();
+        form.append('file', file);
+        response = await fetch('/predict', { method: 'POST', body: form });
+    } else if (INPUT_MODE === 'image') {
+        const img = imageFile.files?.[0];
+        if (!img) throw new Error('Selecciona una imagen primero.');
+        ctx.img = img;
+        const form = new FormData();
+        form.append('image', img);
+        response = await fetch('/ocr_predict', { method: 'POST', body: form });
+    } else if (INPUT_MODE === 'url') {
+        const url = (urlInput.value || '').trim();
+        if (!url) throw new Error('Ingresa una URL válida.');
+        ctx.url = url;
+        response = await fetch('/analyze_url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+    } else {
+        const text = (textarea.value || '').trim();
+        const title = (titleInput.value || '').trim();
+        
+        if (!text && !title) throw new Error('Ingresa al menos un título o contenido para analizar.');
+        
+        ctx.typedText = text;
+        ctx.typedTitle = title;
+        
+        response = await fetch('/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                title: title,
+                text: text 
+            })
+        });
+    }
+
+    return { response, ctx };
+}
+
+/**
+ * Procesa los resultados del análisis
+ */
+function processAnalysisResults(payload, titleInput, textarea) {
+    const percent = Math.round((payload.probability || 0) * 100);
+    const fakePercent = percent;
+    const truePercent = 100 - percent;
+
+    // Guardar información de debug
+    window.currentDebugInfo = payload.debug_info || {};
+    window.currentPredictionInfo = {
+        prediction: payload.prediction,
+        label: payload.label,
+        confidence: Math.round((payload.confidence || 0) * 100),
+        fakePercent: fakePercent,
+        truePercent: truePercent
+    };
+    
+    // Guardar contenido extraído
+    if (payload.extracted_preview) {
+        window.currentExtractedPreview = payload.extracted_preview;
+    } else if (payload.text) {
+        window.currentExtractedPreview = payload.text;
+    } else if (INPUT_MODE === 'text') {
+        const title = titleInput?.value || '';
+        const text = textarea?.value || '';
+        window.currentExtractedPreview = title ? `${title}\n\n${text}` : text;
+    } else {
+        window.currentExtractedPreview = 'Contenido analizado';
+    }
+
+    return {
+        fakePercent: fakePercent,
+        truePercent: truePercent,
+        prediction: payload.prediction || 'Unknown',
+        label: payload.label,
+        sentiment: payload.label === 1 ? 'Negativo' : 'Positivo',
+        riskLevel: payload.label === 1 ? 'Alto' : 'Bajo',
+        mlScore: payload.probability || 0,
+        confidence: Math.round((payload.confidence || 0) * 100)
+    };
+}
+
+/**
+ * Maneja contenido específico según el tipo de análisis
+ */
+function handleSpecificContent(payload, textarea) {
+    // Si es imagen, volcar texto extraído
+    if (INPUT_MODE === 'image' && payload.text) {
+        textarea.value = payload.text;
+        textarea.dispatchEvent(new Event('input'));
+    }
+
+    // Si es URL, mostrar preview
+    if (INPUT_MODE === 'url' && payload.extracted_preview) {
+        const preview = document.getElementById('url-preview');
+        const previewContent = document.getElementById('url-preview-content');
+        if (preview && previewContent) {
+            previewContent.textContent = payload.extracted_preview;
+            preview.classList.remove('hidden');
+        }
+    }
+}
+
+/**
+ * Obtiene el texto para el historial según el contexto
+ */
+function getHistoryText(payload, ctx) {
+    if (INPUT_MODE === 'text') {
+        return ctx.typedTitle ? `${ctx.typedTitle}: ${ctx.typedText}`.trim() : ctx.typedText;
+    } else if (INPUT_MODE === 'file') {
+        return payload.extracted_preview || (ctx.file?.name || 'Archivo analizado');
+    } else if (INPUT_MODE === 'image') {
+        return payload.extracted_preview || payload.text || (ctx.img?.name || 'Imagen analizada');
+    } else if (INPUT_MODE === 'url') {
+        return payload.article_data?.title || ctx.url || 'URL analizada';
+    }
+    return 'Contenido analizado';
+}
+
+/**
+ * Maneja errores durante el análisis
+ */
+function handleAnalysisError(error, resultCard) {
+    Swal.fire({
+        title: 'Error',
+        text: error.message || 'No se pudo completar el análisis.',
+        icon: 'error',
+        background: 'rgba(0, 0, 0, 0.8)',
+        color: 'white'
+    });
+    
+    resultCard.classList.add('hidden');
+}
+
+/**
+ * Inicializa los controles de análisis
+ */
+function initializeAnalysisControls() {
+    const analyzeBtn = document.getElementById('analyze-btn');
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener('click', analyzeText);
+    }
+}
+
+// =====================================================================
+// 12. VISUALIZACIÓN DE RESULTADOS
+// =====================================================================
+
+/**
+ * Muestra los resultados del análisis en la interfaz
+ */
+function displayResults(results) {
+    const title = document.getElementById('result-title');
+    const badge = document.getElementById('confidence-badge');
+    const prob = document.getElementById('result-prob');
+    const fill = document.getElementById('confidence-fill');
+    const description = document.getElementById('result-description');
+    const mlScore = document.getElementById('ml-score');
+    const sentiment = document.getElementById('sentiment');
+    const riskLevel = document.getElementById('risk-level');
+
+    if (!title || !badge || !prob || !fill || !description) return;
+
+    const fakePercent = results.fakePercent || 0;
+    const prediction = results.prediction || 'Unknown';
+    
+    // Configurar visualización según predicción
+    configureResultDisplay(prediction, fakePercent, results, title, badge, description, fill);
+
+    // Mostrar métricas
+    prob.textContent = (results.confidence || 0) + '%';
+    fill.style.width = (results.confidence || 0) + '%';
+    
+    if (mlScore) mlScore.textContent = (results.mlScore || 0).toFixed(3);
+    if (sentiment) sentiment.textContent = results.sentiment || 'Neutro';
+    if (riskLevel) riskLevel.textContent = results.riskLevel || 'Medio';
+
+    // Configurar funcionalidades adicionales
+    setupShareAndDownload();
+    setupDebugButton();
+}
+
+/**
+ * Configura la visualización de resultados según la predicción
+ */
+function configureResultDisplay(prediction, fakePercent, results, title, badge, description, fill) {
+    if (prediction === 'Fake' || results.label === 1) {
+        // ES FAKE NEWS
+        if (fakePercent >= 90) {
+            setResultStyle(title, badge, description, fill, {
+                titleText: 'Posible Desinformación',
+                titleClass: 'text-2xl font-bold text-red-400',
+                badgeText: 'FALSO',
+                badgeClass: 'px-4 py-2 rounded-full text-sm font-bold bg-red-500 bg-opacity-20 text-red-400',
+                descText: 'El análisis detectó múltiples indicadores de desinformación. Se recomienda extrema precaución.',
+                gradient: 'linear-gradient(90deg, #ef4444, #dc2626)'
+            });
+        } else if (fakePercent >= 60) {
+            setResultStyle(title, badge, description, fill, {
+                titleText: 'Probablemente Falso',
+                titleClass: 'text-2xl font-bold text-orange-400',
+                badgeText: 'SOSPECHOSO',
+                badgeClass: 'px-4 py-2 rounded-full text-sm font-bold bg-orange-500 bg-opacity-20 text-orange-400',
+                descText: 'El contenido presenta características típicas de desinformación. Verificar con fuentes confiables.',
+                gradient: 'linear-gradient(90deg, #f97316, #ea580c)'
+            });
+        } else {
+            setResultStyle(title, badge, description, fill, {
+                titleText: 'Requiere Verificación',
+                titleClass: 'text-2xl font-bold text-yellow-400',
+                badgeText: 'DUDOSO',
+                badgeClass: 'px-4 py-2 rounded-full text-sm font-bold bg-yellow-500 bg-opacity-20 text-yellow-400',
+                descText: 'El modelo detectó señales mixtas. Se recomienda verificar con fuentes adicionales.',
+                gradient: 'linear-gradient(90deg, #f59e0b, #d97706)'
+            });
+        }
+    } else {
+        // ES VERDADERO
+        const truePercent = results.truePercent || (100 - fakePercent);
+        if (truePercent >= 80) {
+            setResultStyle(title, badge, description, fill, {
+                titleText: 'Contenido Confiable',
+                titleClass: 'text-2xl font-bold text-green-400',
+                badgeText: 'VERIFICADO',
+                badgeClass: 'px-4 py-2 rounded-full text-sm font-bold bg-green-500 bg-opacity-20 text-green-400',
+                descText: 'El análisis indica que este contenido presenta características de información confiable y verificable.',
+                gradient: 'linear-gradient(90deg, #10b981, #059669)'
+            });
+        } else {
+            setResultStyle(title, badge, description, fill, {
+                titleText: 'Parcialmente Confiable',
+                titleClass: 'text-2xl font-bold text-blue-400',
+                badgeText: 'REVISAR',
+                badgeClass: 'px-4 py-2 rounded-full text-sm font-bold bg-blue-500 bg-opacity-20 text-blue-400',
+                descText: 'El contenido parece legítimo pero presenta algunas inconsistencias menores.',
+                gradient: 'linear-gradient(90deg, #3b82f6, #2563eb)'
+            });
+        }
+    }
+}
+
+/**
+ * Aplica estilos a los elementos de resultado
+ */
+function setResultStyle(title, badge, description, fill, styles) {
+    title.textContent = styles.titleText;
+    title.className = styles.titleClass;
+    badge.textContent = styles.badgeText;
+    badge.className = styles.badgeClass;
+    description.textContent = styles.descText;
+    fill.style.background = styles.gradient;
+}
+
+// =====================================================================
+// 13. PANEL DE DEBUG
+// =====================================================================
+
+/**
+ * Configura el botón y panel de debug
+ */
 function setupDebugButton() {
     const debugBtn = document.getElementById('debug-btn');
     const debugPanel = document.getElementById('debug-panel');
@@ -150,28 +667,51 @@ function setupDebugButton() {
         const isVisible = !debugPanel.classList.contains('hidden');
         
         if (isVisible) {
-            debugPanel.classList.add('hidden');
-            debugBtn.innerHTML = '<i class="fas fa-code text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ver Debug</span>';
+            closeDebugPanel();
         } else {
-            // Mostrar información de debug
-            const debugInfo = window.currentDebugInfo || {};
-            const predInfo = window.currentPredictionInfo || {};
-            
-            // Detectar tipo de análisis
-            const analysisType = debugInfo.extraction_method || 'Texto Manual';
-            const isUrl = analysisType === 'URL Scraping';
-            const isOcr = analysisType === 'OCR';
-            
-            let debugHtml = generateSimpleDebugContent(predInfo, debugInfo, analysisType, isUrl, isOcr);
-            
-            debugContent.innerHTML = debugHtml;
-            
-            debugPanel.classList.remove('hidden');
-            debugBtn.innerHTML = '<i class="fas fa-times text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ocultar Debug</span>';
+            openDebugPanel();
         }
     };
 }
 
+/**
+ * Abre el panel de debug
+ */
+function openDebugPanel() {
+    const debugPanel = document.getElementById('debug-panel');
+    const debugContent = document.getElementById('debug-content');
+    const debugBtn = document.getElementById('debug-btn');
+
+    const debugInfo = window.currentDebugInfo || {};
+    const predInfo = window.currentPredictionInfo || {};
+    
+    const analysisType = debugInfo.extraction_method || 'Texto Manual';
+    const isUrl = analysisType === 'URL Scraping';
+    const isOcr = analysisType === 'OCR';
+    
+    const debugHtml = generateSimpleDebugContent(predInfo, debugInfo, analysisType, isUrl, isOcr);
+    
+    debugContent.innerHTML = debugHtml;
+    debugPanel.classList.remove('hidden');
+    debugBtn.innerHTML = '<i class="fas fa-times text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ocultar Debug</span>';
+}
+
+/**
+ * Cierra el panel de debug
+ */
+function closeDebugPanel() {
+    const debugPanel = document.getElementById('debug-panel');
+    const debugBtn = document.getElementById('debug-btn');
+
+    if (debugPanel && debugBtn) {
+        debugPanel.classList.add('hidden');
+        debugBtn.innerHTML = '<i class="fas fa-code text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ver Debug</span>';
+    }
+}
+
+/**
+ * Genera el contenido del panel de debug
+ */
 function generateSimpleDebugContent(predInfo, debugInfo, analysisType, isUrl, isOcr) {
     const confidence = predInfo.confidence || 0;
     const fakePercent = predInfo.fakePercent || 0;
@@ -262,6 +802,9 @@ function generateSimpleDebugContent(predInfo, debugInfo, analysisType, isUrl, is
     `;
 }
 
+/**
+ * Genera contenido específico según el tipo de análisis
+ */
 function generateTypeSpecificContent(debugInfo, analysisType, isUrl, isOcr) {
     if (isUrl) {
         return `
@@ -344,412 +887,22 @@ function generateTypeSpecificContent(debugInfo, analysisType, isUrl, isOcr) {
     }
 }
 
+/**
+ * Obtiene la clase CSS para el badge según la predicción
+ */
 function getBadgeClass(prediction) {
     if (prediction === 'Fake') return 'badge-danger';
     if (prediction === 'Real') return 'badge-success';
     return 'badge-warning';
 }
 
-darkModeToggle.addEventListener('change', function () {
-    if (this.checked) {
-        html.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-    } else {
-        html.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-    }
-});
-
 // =====================================================================
-// CONFIGURACIÓN Y CONSTANTES
+// 14. GESTIÓN DE MODOS DE ENTRADA
 // =====================================================================
-const CONFIG = {
-    PARTICLE_COUNT: 50,
-    MAX_HISTORY_ITEMS: 15,
-    MAX_FILE_SIZE_MB: 8,
-    CHAR_LIMITS: {
-        WARNING: 6000,
-        DANGER: 8000
-    },
-    CONFIDENCE_THRESHOLDS: {
-        HIGH: 70,
-        MEDIUM: 40
-    }
-};
 
-// =====================================================================
-// VARIABLES GLOBALES
-// =====================================================================
-let INPUT_MODE = 'text'; // 'text' | 'file' | 'image' | 'url'
-let EXAMPLES_DATA = null; // Cache para los ejemplos
-
-// =====================================================================
-// CARGA DE EJEMPLOS
-// =====================================================================
-async function loadExamplesData() {
-    if (EXAMPLES_DATA) return EXAMPLES_DATA; // Retornar cache si existe
-    
-    try {
-        const response = await fetch('/static/examples.json');
-        if (!response.ok) throw new Error('No se pudieron cargar los ejemplos');
-        EXAMPLES_DATA = await response.json();
-        return EXAMPLES_DATA;
-    } catch (error) {
-        console.warn('Error cargando ejemplos:', error);
-        // Fallback con ejemplos embebidos
-        EXAMPLES_DATA = {
-            fake_examples: [
-                {
-                    title: "¡INCREÍBLE! Médicos ocultan cura milagrosa del cáncer",
-                    content: "Los médicos no quieren que sepas este truco secreto que cura el cáncer en solo 3 días..."
-                }
-            ],
-            real_examples: [
-                {
-                    title: "Nuevo tratamiento para diabetes tipo 2 muestra resultados prometedores",
-                    content: "Investigadores de la Universidad de Harvard publicaron en Nature Medicine..."
-                }
-            ]
-        };
-        return EXAMPLES_DATA;
-    }
-}
-
-function getRandomExample() {
-    if (!EXAMPLES_DATA) return null;
-    
-    // Combinar ejemplos falsos y reales
-    const allExamples = [
-        ...EXAMPLES_DATA.fake_examples,
-        ...EXAMPLES_DATA.real_examples
-    ];
-    
-    // Seleccionar ejemplo aleatorio
-    const randomIndex = Math.floor(Math.random() * allExamples.length);
-    return allExamples[randomIndex];
-}
-
-// =====================================================================
-// INICIALIZACIÓN DE LA APLICACIÓN
-// =====================================================================
-function initializeApplication() {
-    initializePreloader();
-    createParticles();
-    initializeSidebar();
-    initializeCharacterCounter();
-    initializeAnalysisControls();
-    initializeSampleText();
-    initializeClearButton();
-    initializeVoiceInput();
-    initializeQuickActions();
-    initializeFileMode();
-    initializeUrlMode();
-    hydrateHistoryUI();
-    
-    // Precargar ejemplos en background
-    loadExamplesData().catch(console.warn);
-}
-// Preloader (1s y fade-out)
-function initializePreloader() {
-    const pre = document.getElementById('preloader');
-    if (!pre) return;
-    // Espera 1s y aplica fade-out; luego quita del flujo
-    setTimeout(() => {
-        pre.classList.add('fade-out');
-        setTimeout(() => { pre.style.display = 'none'; }, 450);
-    }, 1000);
-}
-
-document.addEventListener('DOMContentLoaded', initializeApplication);
-
-// =====================================================================
-// FUNCIONES DE UTILIDAD
-// =====================================================================
-function sanitizeText(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function getHistoryContainer() {
-    return document.getElementById('history');
-}
-
-function loadHistoryFromStorage() {
-    // Sin persistencia: siempre vacío
-    return [];
-}
-
-function saveHistoryToStorage(history) {
-    // Sin persistencia: no hacer nada
-}
-
-// =====================================================================
-// SISTEMA DE PARTÍCULAS
-// =====================================================================
-function createParticles() {
-    const particles = document.getElementById('particles');
-    const particleCount = CONFIG.PARTICLE_COUNT;
-
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.width = Math.random() * 4 + 2 + 'px';
-        particle.style.height = particle.style.width;
-        particle.style.animationDuration = Math.random() * 15 + 10 + 's';
-        particle.style.animationDelay = Math.random() * 20 + 's';
-        particles.appendChild(particle);
-    }
-}
-
-// =====================================================================
-// FUNCIONALIDAD DE LA BARRA LATERAL
-// =====================================================================
-function initializeSidebar() {
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('mobile-overlay');
-
-    // Funcionalidad de alternar barra lateral
-    sidebarToggle?.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('active');
-    });
-
-    // Clic en overlay para cerrar barra lateral
-    overlay.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('active');
-    });
-
-    // Elementos de navegación de la barra lateral
-    document.querySelectorAll('.sidebar-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-        });
-    });
-}
-
-// =====================================================================
-// FUNCIONALIDAD DEL CONTADOR DE CARACTERES
-// =====================================================================
-function initializeCharacterCounter() {
-    const textarea = document.getElementById('news-text');
-    const titleInput = document.getElementById('news-title');
-    const charCount = document.getElementById('char-count');
-
-    function updateCounter() {
-        const textCount = textarea.value.length;
-        const titleCount = titleInput.value.length;
-        const totalCount = textCount + titleCount;
-        
-        charCount.textContent = totalCount.toLocaleString();
-
-        if (totalCount > CONFIG.CHAR_LIMITS.DANGER) {
-            charCount.style.color = '#ef4444';
-        } else if (totalCount > CONFIG.CHAR_LIMITS.WARNING) {
-            charCount.style.color = '#f59e0b';
-        } else {
-            charCount.style.color = '#6b7280';
-        }
-    }
-
-    textarea.addEventListener('input', updateCounter);
-    titleInput.addEventListener('input', updateCounter);
-}
-
-// =====================================================================
-// FUNCIONALIDAD DE ANÁLISIS DE TEXTO
-// =====================================================================
-async function analyzeText() {
-    const loading = document.getElementById('loading');
-    const resultCard = document.getElementById('result-card');
-    const textarea = document.getElementById('news-text');
-    const titleInput = document.getElementById('news-title');
-    const newsFile = document.getElementById('news-file');
-    const imageFile = document.getElementById('image-file');
-    const urlInput = document.getElementById('news-url');
-
-    // Limpiar datos de análisis anterior
-    window.currentDebugInfo = {};
-    window.currentPredictionInfo = {};
-    window.currentExtractedPreview = '';
-
-    // Cerrar panel de debug automáticamente al iniciar nuevo análisis
-    const debugPanel = document.getElementById('debug-panel');
-    const debugBtn = document.getElementById('debug-btn');
-    if (debugPanel && debugBtn) {
-        debugPanel.classList.add('hidden');
-        debugBtn.innerHTML = '<i class="fas fa-code text-purple-600 dark:text-purple-300"></i><span class="text-purple-700 dark:text-purple-200 font-semibold">Ver Debug</span>';
-    }
-
-    let response, payload;
-    // Datos de contexto para decidir qué guardar en historial
-    let ctx = { typedText: '', typedTitle: '', file: null, img: null, url: '' };
-
-    loading.classList.remove('hidden');
-    resultCard.classList.add('hidden');
-
-    try {
-        if (INPUT_MODE === 'file') {
-            const file = newsFile.files?.[0];
-            if (!file) throw new Error('Selecciona un archivo primero.');
-            ctx.file = file;
-            const form = new FormData();
-            form.append('file', file);
-            response = await fetch('/predict', { method: 'POST', body: form });
-        } else if (INPUT_MODE === 'image') {
-            const img = imageFile.files?.[0];
-            if (!img) throw new Error('Selecciona una imagen primero.');
-            ctx.img = img;
-            const form = new FormData();
-            form.append('image', img);
-            response = await fetch('/ocr_predict', { method: 'POST', body: form });
-        } else if (INPUT_MODE === 'url') {
-            const url = (urlInput.value || '').trim();
-            if (!url) throw new Error('Ingresa una URL válida.');
-            ctx.url = url;
-            response = await fetch('/analyze_url', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
-            });
-        } else {
-            // Modo texto: enviar título y contenido por separado
-            const text = (textarea.value || '').trim();
-            const title = (titleInput.value || '').trim();
-            
-            if (!text && !title) throw new Error('Ingresa al menos un título o contenido para analizar.');
-            
-            ctx.typedText = text;
-            ctx.typedTitle = title;
-            
-            response = await fetch('/predict', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    title: title,
-                    text: text 
-                })
-            });
-        }
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || 'Error en el servidor');
-        }
-        
-        payload = await response.json();
-
-        const percent = Math.round((payload.probability || 0) * 100);
-        
-        // CORRECCIÓN: payload.probability es la probabilidad de ser FAKE
-        // Para la visualización necesitamos probabilidad de ser VERDADERO
-        const fakePercent = percent;
-        const truePercent = 100 - percent;
-
-        // Guardar información de debug para mostrar
-        window.currentDebugInfo = payload.debug_info || {};
-        window.currentPredictionInfo = {
-            prediction: payload.prediction,
-            label: payload.label,
-            confidence: Math.round((payload.confidence || 0) * 100),  // Convertir a porcentaje
-            fakePercent: fakePercent,
-            truePercent: truePercent
-        };
-        
-        // Guardar el contenido extraído para exportar
-        if (payload.extracted_preview) {
-            window.currentExtractedPreview = payload.extracted_preview;
-        } else if (payload.text) {
-            window.currentExtractedPreview = payload.text;
-        } else if (INPUT_MODE === 'text') {
-            // Para texto manual, combinar título y contenido
-            const title = titleInput?.value || '';
-            const text = textarea?.value || '';
-            window.currentExtractedPreview = title ? `${title}\n\n${text}` : text;
-        } else {
-            window.currentExtractedPreview = 'Contenido analizado';
-        }
-
-        displayResults({
-            fakePercent: fakePercent,
-            truePercent: truePercent,
-            prediction: payload.prediction || 'Unknown',
-            label: payload.label,
-            sentiment: payload.label === 1 ? 'Negativo' : 'Positivo',
-            riskLevel: payload.label === 1 ? 'Alto' : 'Bajo',
-            mlScore: payload.probability || 0,
-            confidence: Math.round((payload.confidence || 0) * 100)  // Convertir a porcentaje
-        });
-
-        // Si es imagen, volcar el texto extraído al textarea
-        if (INPUT_MODE === 'image' && payload.text) {
-            textarea.value = payload.text;
-            textarea.dispatchEvent(new Event('input'));
-        }
-
-        // Si es URL, mostrar preview del contenido extraído
-        if (INPUT_MODE === 'url' && payload.extracted_preview) {
-            const preview = document.getElementById('url-preview');
-            const previewContent = document.getElementById('url-preview-content');
-            if (preview && previewContent) {
-                previewContent.textContent = payload.extracted_preview;
-                preview.classList.remove('hidden');
-            }
-        }
-
-        // Decidir el texto que se guarda en el historial
-        let historyText = '';
-        if (INPUT_MODE === 'text') {
-            // Combinar título y contenido para el historial
-            historyText = ctx.typedTitle ? `${ctx.typedTitle}: ${ctx.typedText}`.trim() : ctx.typedText;
-        } else if (INPUT_MODE === 'file') {
-            historyText = payload.extracted_preview || (ctx.file?.name || 'Archivo analizado');
-        } else if (INPUT_MODE === 'image') {
-            historyText = payload.extracted_preview || payload.text || (ctx.img?.name || 'Imagen analizada');
-        } else if (INPUT_MODE === 'url') {
-            historyText = payload.article_data?.title || ctx.url || 'URL analizada';
-        }
-        addToHistory(historyText, { 
-            probability: fakePercent, 
-            prediction: payload.prediction,
-            label: payload.label 
-        });
-        
-        // Solo mostrar la tarjeta de resultados si todo fue exitoso
-        resultCard.classList.remove('hidden');
-        
-    } catch (e) {
-        Swal.fire({
-            title: 'Error',
-            text: e.message || 'No se pudo completar el análisis.',
-            icon: 'error',
-            background: 'rgba(0, 0, 0, 0.8)',
-            color: 'white'
-        });
-        
-        // Asegurar que la tarjeta de resultados permanece oculta cuando hay error
-        resultCard.classList.add('hidden');
-        
-    } finally {
-        loading.classList.add('hidden');
-    }
-}
-
-function initializeAnalysisControls() {
-    const analyzeBtn = document.getElementById('analyze-btn');
-    
-    // Mostrar animación de carga mientras se analiza la noticia
-    analyzeBtn.addEventListener('click', analyzeText);
-}
-
-// =====================================================================
-// MODO DE CARGA DE ARCHIVOS
-// =====================================================================
+/**
+ * Inicializa el modo de archivos y sus controles
+ */
 function initializeFileMode() {
     const fileBtn = document.getElementById('file-mode-btn');
     const textMode = document.getElementById('text-mode');
@@ -763,6 +916,11 @@ function initializeFileMode() {
     const fileInfo = document.getElementById('file-info');
     const imageInfo = document.getElementById('image-info');
 
+    if (!fileBtn) return;
+
+    /**
+     * Actualiza el texto del botón según el modo actual
+     */
     function updateButton() {
         if (INPUT_MODE === 'text') {
             fileBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Subir Archivo';
@@ -771,15 +929,18 @@ function initializeFileMode() {
         }
     }
     
+    /**
+     * Cambia el modo de entrada de la aplicación
+     */
     function setMode(mode) {
         INPUT_MODE = mode;
         const sampleBtn = document.getElementById('sample-btn');
         
         // Controlar visibilidad de elementos
-        textMode.classList.toggle('hidden', mode !== 'text');
-        textMode.classList.toggle('block', mode === 'text');
-        fileMode.classList.toggle('hidden', mode !== 'file');
-        imageMode.classList.toggle('hidden', mode !== 'image');
+        if (textMode) textMode.classList.toggle('hidden', mode !== 'text');
+        if (textMode) textMode.classList.toggle('block', mode === 'text');
+        if (fileMode) fileMode.classList.toggle('hidden', mode !== 'file');
+        if (imageMode) imageMode.classList.toggle('hidden', mode !== 'image');
         if (urlMode) urlMode.classList.toggle('hidden', mode !== 'url');
         
         // Ocultar botón "Ejemplo" para archivos, imágenes y URLs
@@ -787,14 +948,14 @@ function initializeFileMode() {
             if (mode === 'file' || mode === 'image' || mode === 'url') {
                 sampleBtn.style.display = 'none';
             } else {
-                sampleBtn.style.display = 'flex'; // Mostrar como flex para mantener el layout
+                sampleBtn.style.display = 'flex';
             }
         }
         
         updateButton();
     }
     
-    // Exponer para otros inicializadores
+    // Exponer funciones para otros módulos
     window.__setInputMode = setMode;
     window.__updateInputButton = updateButton;
 
@@ -802,74 +963,111 @@ function initializeFileMode() {
     fileBtn.addEventListener('click', () => {
         if (INPUT_MODE === 'text') {
             setMode('file');
-            newsFile.value = '';
-            fileInfo.classList.add('hidden');
-            // Abrir selector al entrar a modo archivo
-            setTimeout(() => newsFile.click(), 0);
+            if (newsFile) {
+                newsFile.value = '';
+                if (fileInfo) fileInfo.classList.add('hidden');
+                setTimeout(() => newsFile.click(), 0);
+            }
         } else {
-            // Volver a texto desde archivo, imagen o URL
             setMode('text');
         }
     });
 
-    // Dropzones (click)
-    fileDrop?.addEventListener('click', () => newsFile.click());
-    imageDrop?.addEventListener('click', () => imageFile.click());
+    // Configurar dropzones
+    setupDropzones(fileDrop, imageDrop, newsFile, imageFile);
+    
+    // Configurar listeners de archivos
+    setupFileListeners(newsFile, imageFile, fileInfo, imageInfo);
 
-    // Funciones auxiliares para Drag & Drop
+    // Estado inicial
+    setMode('text');
+}
+
+/**
+ * Configura las zonas de drag & drop
+ */
+function setupDropzones(fileDrop, imageDrop, newsFile, imageFile) {
+    // Click en dropzones
+    fileDrop?.addEventListener('click', () => newsFile?.click());
+    imageDrop?.addEventListener('click', () => imageFile?.click());
+
+    // Función auxiliar para Drag & Drop
     function wireDnD(dropEl, onFile) {
         if (!dropEl) return;
+        
         ['dragenter', 'dragover'].forEach(e =>
-            dropEl.addEventListener(e, ev => { ev.preventDefault(); dropEl.classList.add('border-purple-500'); })
+            dropEl.addEventListener(e, ev => { 
+                ev.preventDefault(); 
+                dropEl.classList.add('border-purple-500'); 
+            })
         );
+        
         ['dragleave', 'drop'].forEach(e =>
-            dropEl.addEventListener(e, ev => { ev.preventDefault(); dropEl.classList.remove('border-purple-500'); })
+            dropEl.addEventListener(e, ev => { 
+                ev.preventDefault(); 
+                dropEl.classList.remove('border-purple-500'); 
+            })
         );
+        
         dropEl.addEventListener('drop', ev => {
             const dtFile = ev.dataTransfer?.files?.[0];
             if (dtFile) onFile(dtFile);
         });
     }
     
+    // Configurar drag & drop para archivos
     wireDnD(fileDrop, (f) => {
-        newsFile.files = new DataTransfer().files; // reset
-        // No se puede asignar File directamente a input; pedimos al usuario usar click
-        Swal.fire({ title: 'Archivo detectado', text: 'Usa clic para seleccionar el archivo.', icon: 'info', background: 'rgba(0,0,0,0.8)', color: 'white' });
+        Swal.fire({ 
+            title: 'Archivo detectado', 
+            text: 'Usa clic para seleccionar el archivo.', 
+            icon: 'info', 
+            background: 'rgba(0,0,0,0.8)', 
+            color: 'white' 
+        });
     });
     
+    // Configurar drag & drop para imágenes
     wireDnD(imageDrop, (f) => {
-        imageFile.files = new DataTransfer().files; // reset
-        Swal.fire({ title: 'Imagen detectada', text: 'Usa clic para seleccionar la imagen.', icon: 'info', background: 'rgba(0,0,0,0.8)', color: 'white' });
+        Swal.fire({ 
+            title: 'Imagen detectada', 
+            text: 'Usa clic para seleccionar la imagen.', 
+            icon: 'info', 
+            background: 'rgba(0,0,0,0.8)', 
+            color: 'white' 
+        });
     });
+}
 
-    // Mostrar info seleccionada
-    newsFile.addEventListener('change', () => {
+/**
+ * Configura los listeners para mostrar información de archivos
+ */
+function setupFileListeners(newsFile, imageFile, fileInfo, imageInfo) {
+    // Mostrar info del archivo seleccionado
+    newsFile?.addEventListener('change', () => {
         const f = newsFile.files?.[0];
-        if (f) {
+        if (f && fileInfo) {
             fileInfo.textContent = `${f.name} • ${(f.size / 1024 / 1024).toFixed(2)} MB`;
             fileInfo.classList.remove('hidden');
-        } else {
+        } else if (fileInfo) {
             fileInfo.classList.add('hidden');
         }
     });
     
-    imageFile.addEventListener('change', () => {
+    // Mostrar info de la imagen seleccionada
+    imageFile?.addEventListener('change', () => {
         const f = imageFile.files?.[0];
-        if (f) {
+        if (f && imageInfo) {
             imageInfo.textContent = `${f.name} • ${(f.size / 1024 / 1024).toFixed(2)} MB`;
             imageInfo.classList.remove('hidden');
-        } else {
+        } else if (imageInfo) {
             imageInfo.classList.add('hidden');
         }
     });
-
-    // Estado inicial
-    setMode('text');
 }
 
-// =====================================================================
-// MODO URL
-// =====================================================================
+/**
+ * Inicializa el modo URL
+ */
 function initializeUrlMode() {
     const urlBtn = document.getElementById('url-mode-btn');
     const urlInput = document.getElementById('news-url');
@@ -896,22 +1094,30 @@ function initializeUrlMode() {
         urlInput.addEventListener('input', () => {
             const url = urlInput.value.trim();
             if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-                urlInput.style.borderColor = '#f59e0b'; // amarillo de advertencia
+                urlInput.style.borderColor = '#f59e0b';
             } else {
-                urlInput.style.borderColor = ''; // resetear
+                urlInput.style.borderColor = '';
             }
         });
     }
 }
 
 // =====================================================================
-// FUNCIONALIDAD DE TEXTO DE EJEMPLO
+// 15. FUNCIONALIDADES DE TEXTO
 // =====================================================================
+
+/**
+ * Inicializa el botón de texto de ejemplo
+ */
 function initializeSampleText() {
-    document.getElementById('sample-btn').addEventListener('click', async () => {
+    const sampleBtn = document.getElementById('sample-btn');
+    if (!sampleBtn) return;
+
+    sampleBtn.addEventListener('click', async () => {
         const textarea = document.getElementById('news-text');
         const titleInput = document.getElementById('news-title');
-        const sampleBtn = document.getElementById('sample-btn');
+        
+        if (!textarea || !titleInput) return;
         
         // Mostrar estado de carga
         const originalContent = sampleBtn.innerHTML;
@@ -932,12 +1138,6 @@ function initializeSampleText() {
                 // Disparar eventos para actualizar contadores
                 titleInput.dispatchEvent(new Event('input'));
                 textarea.dispatchEvent(new Event('input'));
-
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    setTimeout(() => document.body.removeChild(toast), 300);
-                }, 2000);
-                
             } else {
                 throw new Error('No se pudo obtener ejemplo');
             }
@@ -961,11 +1161,14 @@ function initializeSampleText() {
     });
 }
 
-// =====================================================================
-// FUNCIONALIDAD DE BOTÓN LIMPIAR
-// =====================================================================
+/**
+ * Inicializa el botón limpiar
+ */
 function initializeClearButton() {
-    document.getElementById('clear-btn').addEventListener('click', () => {
+    const clearBtn = document.getElementById('clear-btn');
+    if (!clearBtn) return;
+
+    clearBtn.addEventListener('click', () => {
         const textarea = document.getElementById('news-text');
         const titleInput = document.getElementById('news-title');
         const urlInput = document.getElementById('news-url');
@@ -973,10 +1176,14 @@ function initializeClearButton() {
         const resultCard = document.getElementById('result-card');
         
         // Limpiar campos de texto
-        textarea.value = '';
-        titleInput.value = '';
-        textarea.dispatchEvent(new Event('input'));
-        titleInput.dispatchEvent(new Event('input'));
+        if (textarea) {
+            textarea.value = '';
+            textarea.dispatchEvent(new Event('input'));
+        }
+        if (titleInput) {
+            titleInput.value = '';
+            titleInput.dispatchEvent(new Event('input'));
+        }
         
         // Limpiar URL input y preview
         if (urlInput) {
@@ -987,102 +1194,37 @@ function initializeClearButton() {
             urlPreview.classList.add('hidden');
         }
         
-        // Volver al modo texto y mostrar botón de ejemplo
+        // Volver al modo texto
         if (window.__setInputMode) {
             window.__setInputMode('text');
         }
         
         // Ocultar resultados
-        resultCard.classList.add('hidden');
+        if (resultCard) {
+            resultCard.classList.add('hidden');
+        }
     });
 }
 
 // =====================================================================
-// VISUALIZACIÓN DE RESULTADOS
+// 16. ENTRADA POR VOZ
 // =====================================================================
-function displayResults(results) {
-    const title = document.getElementById('result-title');
-    const badge = document.getElementById('confidence-badge');
-    const prob = document.getElementById('result-prob');
-    const fill = document.getElementById('confidence-fill');
-    const description = document.getElementById('result-description');
-    const mlScore = document.getElementById('ml-score');
-    const sentiment = document.getElementById('sentiment');
-    const riskLevel = document.getElementById('risk-level');
 
-    const fakePercent = results.fakePercent || 0;
-    const prediction = results.prediction || 'Unknown';
-    
-    // Lógica correcta: usar la predicción del modelo directamente
-    if (prediction === 'Fake' || results.label === 1) {
-        // ES FAKE NEWS
-        if (fakePercent >= 90) {
-            title.textContent = 'Posible Desinformación';
-            title.className = 'text-2xl font-bold text-red-400';
-            badge.textContent = 'FALSO';
-            badge.className = 'px-4 py-2 rounded-full text-sm font-bold bg-red-500 bg-opacity-20 text-red-400';
-            description.textContent = 'El análisis detectó múltiples indicadores de desinformación. Se recomienda extrema precaución.';
-            fill.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
-        } else if (fakePercent >= 60) {
-            title.textContent = 'Probablemente Falso';
-            title.className = 'text-2xl font-bold text-orange-400';
-            badge.textContent = 'SOSPECHOSO';
-            badge.className = 'px-4 py-2 rounded-full text-sm font-bold bg-orange-500 bg-opacity-20 text-orange-400';
-            description.textContent = 'El contenido presenta características típicas de desinformación. Verificar con fuentes confiables.';
-            fill.style.background = 'linear-gradient(90deg, #f97316, #ea580c)';
-        } else {
-            title.textContent = 'Requiere Verificación';
-            title.className = 'text-2xl font-bold text-yellow-400';
-            badge.textContent = 'DUDOSO';
-            badge.className = 'px-4 py-2 rounded-full text-sm font-bold bg-yellow-500 bg-opacity-20 text-yellow-400';
-            description.textContent = 'El modelo detectó señales mixtas. Se recomienda verificar con fuentes adicionales.';
-            fill.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
-        }
-    } else {
-        // ES VERDADERO
-        const truePercent = results.truePercent || (100 - fakePercent);
-        if (truePercent >= 80) {
-            title.textContent = 'Contenido Confiable';
-            title.className = 'text-2xl font-bold text-green-400';
-            badge.textContent = 'VERIFICADO';
-            badge.className = 'px-4 py-2 rounded-full text-sm font-bold bg-green-500 bg-opacity-20 text-green-400';
-            description.textContent = 'El análisis indica que este contenido presenta características de información confiable y verificable.';
-            fill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
-        } else {
-            title.textContent = 'Parcialmente Confiable';
-            title.className = 'text-2xl font-bold text-blue-400';
-            badge.textContent = 'REVISAR';
-            badge.className = 'px-4 py-2 rounded-full text-sm font-bold bg-blue-500 bg-opacity-20 text-blue-400';
-            description.textContent = 'El contenido parece legítimo pero presenta algunas inconsistencias menores.';
-            fill.style.background = 'linear-gradient(90deg, #3b82f6, #2563eb)';
-        }
-    }
-
-    // Mostrar el nivel de confianza del modelo (no la probabilidad de fake)
-    prob.textContent = (results.confidence || 0) + '%';
-    fill.style.width = (results.confidence || 0) + '%';
-    mlScore.textContent = (results.mlScore || 0).toFixed(3);
-    sentiment.textContent = results.sentiment || 'Neutro';
-    riskLevel.textContent = results.riskLevel || 'Medio';
-
-    // Llamar a la función de compartir/descargar solo cuando hay resultado
-    setupShareAndDownload();
-    setupDebugButton();
-}
-
-// =====================================================================
-// FUNCIONALIDAD DE ENTRADA POR VOZ
-// =====================================================================
+/**
+ * Inicializa la funcionalidad de entrada por voz
+ */
 function initializeVoiceInput() {
     const voiceInputBtn = document.getElementById('voice-input');
     const newsTextarea = document.getElementById('news-text');
+
+    if (!voiceInputBtn || !newsTextarea) return;
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
 
-        recognition.lang = 'es-ES'; // Configurar el idioma a español
-        recognition.interimResults = false; // Solo resultados finales
+        recognition.lang = 'es-ES';
+        recognition.interimResults = false;
         recognition.maxAlternatives = 1;
 
         let isListening = false;
@@ -1136,8 +1278,12 @@ function initializeVoiceInput() {
 }
 
 // =====================================================================
-// BOTONES DE ACCIÓN RÁPIDA
+// 17. BOTONES DE ACCIÓN RÁPIDA
 // =====================================================================
+
+/**
+ * Inicializa los botones de acción rápida
+ */
 function initializeQuickActions() {
     const imageInput = document.getElementById('image-file');
     const quickUrlBtn = document.getElementById('quick-url-btn');
@@ -1166,7 +1312,6 @@ function initializeQuickActions() {
             if (window.__updateInputButton) {
                 window.__updateInputButton();
             }
-            // Abrir gestor de archivos automáticamente
             const newsFile = document.getElementById('news-file');
             if (newsFile) {
                 newsFile.click();
@@ -1183,7 +1328,6 @@ function initializeQuickActions() {
             if (window.__updateInputButton) {
                 window.__updateInputButton();
             }
-            // Enfocar el textarea después de cambiar al modo texto
             setTimeout(() => {
                 const textarea = document.getElementById('news-text');
                 if (textarea) textarea.focus();
@@ -1196,19 +1340,24 @@ function initializeQuickActions() {
         button.addEventListener('click', () => {
             const action = button.querySelector('span')?.textContent?.trim();
             if (action === 'Analizar Imagen') {
-                // Cambiar al modo imagen y abrir selector
                 if (window.__setInputMode) window.__setInputMode('image');
                 if (window.__updateInputButton) window.__updateInputButton();
-                imageInput.value = '';
-                imageInput.click();
+                if (imageInput) {
+                    imageInput.value = '';
+                    imageInput.click();
+                }
             }
         });
     });
 }
 
 // =====================================================================
-// GESTIÓN DEL HISTORIAL
+// 18. GESTIÓN DEL HISTORIAL
 // =====================================================================
+
+/**
+ * Renderiza un elemento del historial en la interfaz
+ */
 function renderHistoryItem(container, entry) {
     const probability = Number(entry.probability) || 0;
     const prediction = entry.prediction || 'Unknown';
@@ -1218,7 +1367,7 @@ function renderHistoryItem(container, entry) {
     let title = 'Requiere verificación';
     let statusText = 'dudoso';
     
-    // Usar la misma lógica que displayResults
+    // Determinar estilo según predicción
     if (prediction === 'Fake' || label === 1) {
         if (probability >= 90) {
             color = 'red-400';
@@ -1263,14 +1412,20 @@ function renderHistoryItem(container, entry) {
     container.prepend(card);
 }
 
+/**
+ * Inicializa la interfaz del historial
+ */
 function hydrateHistoryUI() {
-    // Sin persistencia: solo asegurar placeholder visible al inicio
     const container = getHistoryContainer();
     if (!container) return;
+    
     const empty = document.getElementById('empty-history');
     if (empty) empty.classList.remove('hidden');
 }
 
+/**
+ * Agrega una entrada al historial
+ */
 function addToHistory(text, result) {
     const container = getHistoryContainer();
     if (!container) {
@@ -1283,16 +1438,17 @@ function addToHistory(text, result) {
         probability: Number(result.probability) || 0,
         time: new Date().toLocaleTimeString(),
         prediction: result.prediction || 'Unknown',
+        label: result.label
     };
 
     // Ocultar placeholder si existe
     const empty = document.getElementById('empty-history');
     if (empty) empty.classList.add('hidden');
 
-    // Pintar en UI
+    // Renderizar en UI
     renderHistoryItem(container, entry);
 
-    // Mantener máximo 15 tarjetas en UI
+    // Mantener máximo de elementos
     while (container.children.length > CONFIG.MAX_HISTORY_ITEMS) {
         container.removeChild(container.lastElementChild);
     }
