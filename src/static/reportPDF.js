@@ -263,6 +263,59 @@ function setupShareAndDownload() {
                             </div>
                         </div>
 
+                        <!-- Signature Section -->
+                        <div style="margin-bottom: 30px; margin-top: 35px;">
+                            <h2 style="font-size: 14px; font-weight: 600; color: #2c3e50; margin: 0 0 15px 0; 
+                                    border-left: 3px solid ${badgeColor}; padding-left: 10px; 
+                                    text-transform: uppercase; letter-spacing: 0.5px;">
+                                Autorización y Responsabilidad
+                            </h2>
+                            <div style="text-align: center; padding: 25px 0; border: 1px solid #e1e4e8; 
+                                    background: #fafbfc; margin-top: 20px;">
+                                <div style="border-top: 1px solid #2c3e50; width: 250px; margin: 0 auto 15px auto;"></div>
+                                <div style="font-size: 12px; font-weight: 600; color: #2c3e50; margin-bottom: 3px; 
+                                        text-transform: uppercase; letter-spacing: 0.8px;">
+                                    ${(() => {
+                                        const responsables = [
+                                            'Javier Omar Haro Soledispa',
+                                            'Steven Alexander Nieto Durán', 
+                                            'Marcelo Alberto Romero Jara',
+                                            'César Josué Quevedo Macay'
+                                        ];
+                                        const randomIndex = Math.floor(Math.random() * responsables.length);
+                                        return responsables[randomIndex];
+                                    })()}
+                                </div>
+                                <div style="font-size: 10px; color: #7f8c8d; margin-bottom: 3px;">
+                                    C.I: 0956847312
+                                </div>
+                                <div style="font-size: 11px; font-weight: 600; color: #34495e; 
+                                        text-transform: uppercase; letter-spacing: 1px;">
+                                    Director de Análisis de Credibilidad
+                                </div>
+                                <div style="font-size: 9px; color: #95a5a6; margin-top: 5px; 
+                                        font-style: italic;">
+                                    TruthLens AI - División de Verificación Digital
+                                </div>
+                            </div>
+
+                            <br><br><br>
+                            
+                            <!-- Disclaimer profesional -->
+                            <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; 
+                                    border-left: 3px solid #e74c3c; font-size: 8px; color: #34495e; 
+                                    line-height: 1.4;">
+                                <div style="font-weight: 600; margin-bottom: 5px; color: #e74c3c; 
+                                        text-transform: uppercase; letter-spacing: 0.5px;">
+                                    Aviso Legal y Limitaciones
+                                </div>
+                                Este reporte ha sido generado mediante inteligencia artificial y algoritmos de procesamiento de lenguaje natural. 
+                                Los resultados representan un análisis probabilístico basado en patrones detectados en el contenido analizado. 
+                                Se recomienda corroborar la información a través de fuentes adicionales y ejercer criterio periodístico independiente. 
+                                TruthLens AI no se responsabiliza por decisiones editoriales basadas únicamente en este análisis automatizado.
+                            </div>
+                        </div>
+
                         <!-- Footer -->
                         <div style="border-top: 1px solid #bdc3c7; padding-top: 15px; margin-top: 20px;">
                             <table style="width: 100%; border-collapse: collapse; font-size: 9px; color: #7f8c8d;">

@@ -1,4 +1,5 @@
 # IMPORTACIONES Y CONFIGURACIÓN INICIAL
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 import requests
 import os
@@ -16,6 +17,10 @@ from config.settings import (
 from utils.models.model_manager import get_truth_lens_model, get_news_extractor
 from utils.file_extractors import extract_text_from_file
 from utils.response_helpers import create_debug_info, create_standard_response, create_error_response
+from utils.models.update_stats import (
+    cargar_stats, guardar_stats, registrar_analisis
+)
+
 
 # CONFIGURACIÓN DE LA APLICACIÓN FLASK
 app = Flask(__name__, template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLDER)
@@ -80,7 +85,11 @@ def predict():
     # Realizar predicción con BERT usando título y contenido separados
     try:
         result = get_truth_lens_model().predict(title, text)
-        
+        # Determinar si la predicción es fake
+        es_fake = (result.get('prediction', '').lower() == 'fake')
+        # No hay ground truth, así que asumimos correcto si el modelo predice con alta confianza (>0.8)
+        es_correcto = result.get('confidence', 0) > 0.8
+        registrar_analisis(es_fake, es_correcto)
         # Determinar el tipo de entrada para debug
         is_file_upload = 'file' in request.files
         extraction_method = "Archivo subido" if is_file_upload else "Texto Manual"
@@ -170,6 +179,9 @@ def analyze_url():
         
         # Realizar análisis con contenido optimizado usando BERT directamente
         result = get_truth_lens_model().predict(title, content_truncated + " " + description)
+        es_fake = (result.get('prediction', '').lower() == 'fake')
+        es_correcto = result.get('confidence', 0) > 0.8
+        registrar_analisis(es_fake, es_correcto)
         
         if not result or result.get('prediction') == 'Error':
             return jsonify(*create_error_response("No se pudo analizar el contenido extraído", 400))
@@ -261,6 +273,9 @@ def ocr_predict():
     # Realizar predicción con BERT
     try:
         result = get_truth_lens_model().predict(text, "")
+        es_fake = (result.get('prediction', '').lower() == 'fake')
+        es_correcto = result.get('confidence', 0) > 0.8
+        registrar_analisis(es_fake, es_correcto)
         
         # Crear respuesta usando funciones auxiliares
         response = create_standard_response(result)
@@ -280,6 +295,22 @@ def ocr_predict():
         return jsonify(response)
     except Exception as e:
         return jsonify(*create_error_response(f"Error en predicción BERT: {str(e)}", 500))
+
+# Ruta principal con stats
+@app.route('/stats', methods=['GET'])
+def get_stats():
+    caller = request.args.get('caller', 'unknown')
+    
+    print(f"Fetching stats for /stats endpoint... Caller: {caller}")
+    """Endpoint para obtener estadísticas en formato JSON"""
+    stats = cargar_stats()
+    hoy = datetime.now().strftime('%Y-%m-%d')
+    return jsonify({
+        'total_analisis': stats.get('total_analisis', 0),
+        'analisis_hoy': stats.get('analisis_diarios', {}).get(hoy, 0),
+        'total_fakes': stats.get('total_fakes', 0),
+        'fakes_hoy': stats.get('fakes_diarios', {}).get(hoy, 0)
+    })
 
 # EJECUCIÓN PRINCIPAL
 if __name__ == "__main__":

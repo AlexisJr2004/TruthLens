@@ -576,6 +576,7 @@ function displayResults(results) {
     // Configurar funcionalidades adicionales
     setupShareAndDownload();
     setupDebugButton();
+    fetchAndUpdateStats();
 }
 
 /**
@@ -1257,7 +1258,7 @@ function initializeVoiceInput() {
 
         recognition.addEventListener('error', (event) => {
             Swal.fire({
-                title: 'Error de reconocimiento',
+                title: 'Error de reconocimiento Prueva con otro navegador',
                 text: `Ocurrió un error: ${event.error}`,
                 icon: 'error',
                 background: 'rgba(0, 0, 0, 0.8)',
@@ -1453,3 +1454,27 @@ function addToHistory(text, result) {
         container.removeChild(container.lastElementChild);
     }
 }
+
+// =====================================================================
+// 19. ACTUALIZACIÓN DINÁMICA DE ESTADÍSTICAS
+// =====================================================================
+/**
+ * Muestra los resultados dinàmicamente en la interfaz
+ */
+function fetchAndUpdateStats() {
+    fetch("/stats")
+        .then((response) => response.json())
+        .then((data) => {
+            document.querySelector("#analisis-hoy").textContent = data.analisis_hoy;
+            document.querySelector("#total-analisis").textContent = data.total_analisis;
+            document.querySelector("#total-fakes").textContent = data.total_fakes;
+            document.querySelector("#fakes-hoy").textContent = data.fakes_hoy;
+        })
+        .catch((error) => {
+            console.error("Error al obtener estadísticas:", error);
+        });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchAndUpdateStats(); // Llamar explícitamente a la función para cargar estadísticas
+});

@@ -9,3 +9,4 @@ eda_outputs/
 test_*.py
 MIGRATION_BERT.md
 .env
+stats_analisis.json
