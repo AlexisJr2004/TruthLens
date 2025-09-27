@@ -1,4 +1,5 @@
 # IMPORTACIONES Y CONFIGURACIÓN INICIAL
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 import requests
 import os
@@ -16,6 +17,11 @@ from config.settings import (
 from utils.models.model_manager import get_truth_lens_model, get_news_extractor
 from utils.file_extractors import extract_text_from_file
 from utils.response_helpers import create_debug_info, create_standard_response, create_error_response
+from utils.models.update_stats import (
+    cargar_stats, guardar_stats, registrar_analisis,
+    obtener_total_analisis, obtener_analisis_hoy,
+    obtener_total_fakes, obtener_fakes_hoy
+)
 
 # CONFIGURACIÓN DE LA APLICACIÓN FLASK
 app = Flask(__name__, template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLDER)
@@ -75,12 +81,17 @@ def predict():
     # Validación
     combined_text = f"{title} {text}".strip()
     if not combined_text or len(combined_text) < 5:
+        
         return jsonify(*create_error_response("No se encontró texto suficiente para analizar", 400))
 
     # Realizar predicción con BERT usando título y contenido separados
     try:
         result = get_truth_lens_model().predict(title, text)
-        
+        # Determinar si la predicción es fake
+        es_fake = (result.get('prediction', '').lower() == 'fake')
+        # No hay ground truth, así que asumimos correcto si el modelo predice con alta confianza (>0.8)
+        es_correcto = result.get('confidence', 0) > 0.8
+        registrar_analisis(es_fake, es_correcto)
         # Determinar el tipo de entrada para debug
         is_file_upload = 'file' in request.files
         extraction_method = "Archivo subido" if is_file_upload else "Texto Manual"
@@ -89,7 +100,6 @@ def predict():
             f = request.files['file']
             file_size_mb = len(content) / (1024 * 1024)  # Usar content ya leído
             file_info = f"Archivo: {f.filename or 'sin_nombre'} ({file_size_mb:.2f} MB)"
-        
         response = create_standard_response(result) # Crear respuesta usando funciones auxiliares
         response["debug_info"] = create_debug_info(
             result, 
@@ -99,7 +109,6 @@ def predict():
             file_info=file_info
         )
         response["extracted_preview"] = (combined_text[:180] + '...') if combined_text else None
-        
         return jsonify(response)
     except Exception as e:
         return jsonify(*create_error_response(f"Error en predicción BERT: {str(e)}", 500))
@@ -170,21 +179,19 @@ def analyze_url():
         
         # Realizar análisis con contenido optimizado usando BERT directamente
         result = get_truth_lens_model().predict(title, content_truncated + " " + description)
-        
+        es_fake = (result.get('prediction', '').lower() == 'fake')
+        es_correcto = result.get('confidence', 0) > 0.8
+        registrar_analisis(es_fake, es_correcto)
         if not result or result.get('prediction') == 'Error':
             return jsonify(*create_error_response("No se pudo analizar el contenido extraído", 400))
-        
         # Crear preview del contenido extraído
         preview_parts = []
         if title: preview_parts.append(f"Título: {title[:100]}...")
         if description: preview_parts.append(f"Descripción: {description[:100]}...")
         if content_truncated: preview_parts.append(f"Contenido: {content_truncated[:200]}...")
-        
         extracted_preview = " | ".join(preview_parts)
-
         # Guardar el artículo completo en un archivo para referencia futura
         get_news_extractor().save_to_file(article_data)
-        
         response = create_standard_response(result) # Crear respuesta usando funciones auxiliares
         response.update({
             "url": url,
@@ -204,7 +211,6 @@ def analyze_url():
             },
             "extracted_preview": extracted_preview
         })
-        
         # Agregar debug_info con campos específicos para URL
         response["debug_info"] = create_debug_info(
             result,
@@ -217,7 +223,6 @@ def analyze_url():
             truncation_applied=truncation_applied,
             optimization_applied="Smart truncation by paragraphs" if truncation_applied else "No truncation needed"
         )
-        
         return jsonify(response)
         
     except requests.RequestException as e:
@@ -262,13 +267,15 @@ def ocr_predict():
     try:
         result = get_truth_lens_model().predict(text, "")
         
+        es_fake = (result.get('prediction', '').lower() == 'fake')
+        es_correcto = result.get('confidence', 0) > 0.8
+        registrar_analisis(es_fake, es_correcto)
         # Crear respuesta usando funciones auxiliares
         response = create_standard_response(result)
         response.update({
             "text": text,
             "extracted_preview": (text[:180] + '...') if len(text) > 180 else text
         })
-        
         # Agregar debug_info específico para OCR
         response["debug_info"] = create_debug_info(
             result,
@@ -276,10 +283,26 @@ def ocr_predict():
             text=text,
             extraction_method="OCR"
         )
-        
         return jsonify(response)
     except Exception as e:
         return jsonify(*create_error_response(f"Error en predicción BERT: {str(e)}", 500))
+
+
+# Ruta principal con stats
+@app.route('/stats', methods=['GET'])
+def get_stats():
+    caller = request.args.get('caller', 'unknown')
+    
+    print(f"Fetching stats for /stats endpoint... Caller: {caller}")
+    """Endpoint para obtener estadísticas en formato JSON"""
+    stats = cargar_stats()
+    hoy = datetime.now().strftime('%Y-%m-%d')
+    return jsonify({
+        'total_analisis': stats.get('total_analisis', 0),
+        'analisis_hoy': stats.get('analisis_diarios', {}).get(hoy, 0),
+        'total_fakes': stats.get('total_fakes', 0),
+        'fakes_hoy': stats.get('fakes_diarios', {}).get(hoy, 0)
+    })
 
 # EJECUCIÓN PRINCIPAL
 if __name__ == "__main__":
