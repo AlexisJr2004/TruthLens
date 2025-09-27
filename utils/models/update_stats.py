@@ -60,16 +60,3 @@ def registrar_analisis(es_fake, es_correcto):
         stats['total_correctos'] += 1
     guardar_stats(stats)
 
-def obtener_total_analisis():
-    return cargar_stats().get('total_analisis', 0)
-
-def obtener_analisis_hoy():
-    hoy = datetime.now().strftime('%Y-%m-%d')
-    return cargar_stats().get('analisis_diarios', {}).get(hoy, 0)
-
-def obtener_total_fakes():
-    return cargar_stats().get('total_fakes', 0)
-
-def obtener_fakes_hoy():
-    hoy = datetime.now().strftime('%Y-%m-%d')
-    return cargar_stats().get('fakes_diarios', {}).get(hoy, 0)
